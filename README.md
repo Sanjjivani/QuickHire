@@ -104,13 +104,12 @@ quickhire/
 ├── run.py                # Application entry point
 └── README.md             # This file
 
-
 🚀 Quick Start
 Installation
 Clone the repository
 
 bash
-git clone https://github.com/yourusername/quickhire.git
+git clone https://github.com/sanjivani/quickhire.git
 cd quickhire
 Create a virtual environment
 
