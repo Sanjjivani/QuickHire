@@ -1,0 +1,600 @@
+{% extends "base.html" %}
+{% block title %}Home - QuickHire{% endblock %}
+{% block content %}
+<!-- Modern Hero Section -->
+<section class="hero-modern">
+    <div class="container">
+        <div class="row justify-content-center text-center">
+            <div class="col-lg-8">
+                <div class="hero-content">
+                    <h1 class="hero-title animate__animated animate__fadeInUp">
+                        Hire Smarter. Work Faster.
+                    </h1>
+                    <p class="hero-subtitle animate__animated animate__fadeInUp animate__delay-1s">
+                        Where <strong>Amazing Talent</strong> Meets <strong>Great Opportunities</strong>
+                    </p>
+                    <p class="hero-description animate__animated animate__fadeInUp animate__delay-2s">
+                        Connect instantly with skilled local workers or find your dream job in seconds
+                    </p>
+                    <div class="hero-buttons animate__animated animate__fadeInUp animate__delay-3s">
+                        <a href="{{ url_for('register') }}" class="btn-modern btn-primary-modern">
+                            <i class="fas fa-rocket me-2"></i>Launch Your Journey
+                        </a>
+                        <a href="{{ url_for('login') }}" class="btn-modern btn-outline-modern">
+                            <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8 text-center">
+                <h2 class="display-5 fw-bold mb-3 text-gradient">Why Choose QuickHire?</h2>
+                <p class="lead text-muted-dark">Experience the future of hiring and job searching</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card animate-on-scroll">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Lightning Fast</h4>
+                    <p class="feature-description">Connect with opportunities in seconds with our streamlined process.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card animate-on-scroll">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Verified Profiles</h4>
+                    <p class="feature-description">Every user is verified for your safety and peace of mind.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card animate-on-scroll">
+                    <div class="feature-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Direct Contact</h4>
+                    <p class="feature-description">Communicate directly with employers or job seekers.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Role Selection Section -->
+<section class="py-5 bg-section">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="card-modern h-100">
+                    <div class="card-body p-4 text-center">
+                        <div class="feature-icon bg-primary mb-4 mx-auto">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <h3 class="fw-bold mb-3">For Job Seekers</h3>
+                        <p class="role-description mb-4">Discover exciting opportunities in cooking, cleaning, driving, tech, and more. Your next big break is waiting!</p>
+                        <div class="d-flex justify-content-center gap-3 mb-4">
+                            <span class="badge-modern badge-primary-modern">
+                                <i class="fas fa-briefcase me-1"></i>Multiple Categories
+                            </span>
+                            <span class="badge-modern badge-primary-modern">
+                                <i class="fas fa-map-marker-alt me-1"></i>Local Opportunities
+                            </span>
+                        </div>
+                        <a href="{{ url_for('register') }}" class="btn-modern btn-primary-modern">
+                            <i class="fas fa-play me-2"></i>Start Your Journey
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card-modern h-100">
+                    <div class="card-body p-4 text-center">
+                        <div class="feature-icon bg-success mb-4 mx-auto">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <h3 class="fw-bold mb-3">For Employers</h3>
+                        <p class="role-description mb-4">Find reliable, skilled workers for your business or personal needs. Build your dream team today!</p>
+                        <div class="d-flex justify-content-center gap-3 mb-4">
+                            <span class="badge-modern badge-success-modern">
+                                <i class="fas fa-search me-1"></i>Smart Matching
+                            </span>
+                            <span class="badge-modern badge-success-modern">
+                                <i class="fas fa-clock me-1"></i>Quick Hiring
+                            </span>
+                        </div>
+                        <a href="{{ url_for('register') }}" class="btn-modern btn-primary-modern">
+                            <i class="fas fa-search me-2"></i>Find Talent
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Statistics Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4 text-center">
+            <div class="col-md-3">
+                <div class="card-modern stat-card">
+                    <div class="card-body py-4">
+                        <h3 class="display-6 fw-bold text-primary mb-2">500+</h3>
+                        <p class="stat-label">Jobs Posted</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card-modern stat-card">
+                    <div class="card-body py-4">
+                        <h3 class="display-6 fw-bold text-success mb-2">1K+</h3>
+                        <p class="stat-label">Active Users</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card-modern stat-card">
+                    <div class="card-body py-4">
+                        <h3 class="display-6 fw-bold text-warning mb-2">95%</h3>
+                        <p class="stat-label">Success Rate</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card-modern stat-card">
+                    <div class="card-body py-4">
+                        <h3 class="display-6 fw-bold text-info mb-2">24/7</h3>
+                        <p class="stat-label">Support</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="py-5 bg-section">
+    <div class="container">
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8 text-center">
+                <h2 class="display-5 fw-bold mb-3 text-gradient">How QuickHire Works</h2>
+                <p class="lead text-muted-dark">Simple steps to get started with your hiring or job search journey</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="process-card text-center">
+                    <div class="process-number">1</div>
+                    <div class="process-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Create Account</h4>
+                    <p class="process-description">Sign up as a job seeker or employer in less than 2 minutes</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="process-card text-center">
+                    <div class="process-number">2</div>
+                    <div class="process-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Find Opportunities</h4>
+                    <p class="process-description">Browse jobs or talent based on skills, location, and preferences</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="process-card text-center">
+                    <div class="process-number">3</div>
+                    <div class="process-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Connect & Hire</h4>
+                    <p class="process-description">Chat directly and make hiring decisions quickly</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Popular Categories Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8 text-center">
+                <h2 class="display-5 fw-bold mb-3 text-gradient">Popular Job Categories</h2>
+                <p class="lead text-muted-dark">Find opportunities in these high-demand categories</p>
+            </div>
+        </div>
+        
+        <div class="row g-3">
+            <div class="col-md-6 col-lg-3">
+                <div class="category-card">
+                    <div class="category-icon">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <h5 class="fw-bold">Cooking</h5>
+                    <p class="category-count">120+ Jobs</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="category-card">
+                    <div class="category-icon">
+                        <i class="fas fa-broom"></i>
+                    </div>
+                    <h5 class="fw-bold">Cleaning</h5>
+                    <p class="category-count">85+ Jobs</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="category-card">
+                    <div class="category-icon">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <h5 class="fw-bold">Driving</h5>
+                    <p class="category-count">65+ Jobs</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="category-card">
+                    <div class="category-icon">
+                        <i class="fas fa-baby"></i>
+                    </div>
+                    <h5 class="fw-bold">Babysitting</h5>
+                    <p class="category-count">45+ Jobs</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-primary text-white">
+    <div class="container">
+        <div class="row justify-content-center text-center">
+            <div class="col-lg-8">
+                <h2 class="display-6 fw-bold mb-3">Ready to Get Started?</h2>
+                <p class="lead mb-4 opacity-75">Join thousands of employers and job seekers who have found success with QuickHire</p>
+                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-user-plus me-2"></i>Sign Up Free
+                    </a>
+                    <a href="{{ url_for('jobs') }}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-search me-2"></i>Browse Jobs
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+// Animate on scroll functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const animateElements = document.querySelectorAll('.animate-on-scroll');
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate__animated', 'animate__fadeInUp');
+            }
+        });
+    }, { threshold: 0.1 });
+    
+    animateElements.forEach(element => {
+        observer.observe(element);
+    });
+});
+</script>
+
+<style>
+/* Hero Section Styles */
+.hero-modern {
+    background: var(--gradient-dark);
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(67, 97, 238, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(114, 9, 183, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(0, 180, 216, 0.05) 0%, transparent 50%);
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1.5rem;
+    line-height: 1.1;
+}
+
+.hero-subtitle {
+    font-size: 1.5rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 1rem;
+    font-weight: 400;
+}
+
+.hero-description {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 2.5rem;
+    font-weight: 300;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Feature Cards */
+.feature-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    transition: all var(--transition-normal);
+    height: 100%;
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-xl);
+    border-color: var(--primary);
+}
+
+.feature-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--gradient-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 2rem;
+    color: white;
+}
+
+.feature-description {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+/* Process Cards */
+.process-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2rem 1.5rem;
+    position: relative;
+    transition: all var(--transition-normal);
+}
+
+.process-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.process-number {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 40px;
+    background: var(--gradient-primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.process-icon {
+    width: 70px;
+    height: 70px;
+    background: var(--bg-secondary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 1.75rem;
+    color: var(--primary);
+}
+
+.process-description {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+/* Category Cards */
+.category-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2rem 1rem;
+    text-align: center;
+    transition: all var(--transition-normal);
+    cursor: pointer;
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary);
+}
+
+.category-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--gradient-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.category-count {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-bottom: 0;
+}
+
+/* Section Background */
+.bg-section {
+    background: var(--bg-primary);
+}
+
+[data-theme="dark"] .bg-section {
+    background: var(--gray-900);
+}
+
+[data-theme="light"] .bg-section {
+    background: var(--gray-100);
+}
+
+/* Text Colors for Dark/Light Mode */
+.text-muted-dark {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .text-muted-dark {
+    color: var(--gray-300);
+}
+
+[data-theme="light"] .text-muted-dark {
+    color: var(--gray-600);
+}
+
+.role-description {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .role-description {
+    color: var(--gray-300);
+}
+
+[data-theme="light"] .role-description {
+    color: var(--gray-600);
+}
+
+.stat-label {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .stat-label {
+    color: var(--gray-300);
+}
+
+[data-theme="light"] .stat-label {
+    color: var(--gray-600);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.25rem;
+    }
+    
+    .hero-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .hero-buttons .btn-modern {
+        width: 100%;
+        max-width: 300px;
+    }
+    
+    .display-5 {
+        font-size: 2rem;
+    }
+    
+    .display-6 {
+        font-size: 1.75rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.1rem;
+    }
+    
+    .feature-card,
+    .process-card,
+    .category-card {
+        padding: 1.5rem 1rem;
+    }
+    
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+    
+    .process-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+}
+
+/* Animation delays for staggered effects */
+.animate-on-scroll:nth-child(1) { animation-delay: 0.1s; }
+.animate-on-scroll:nth-child(2) { animation-delay: 0.2s; }
+.animate-on-scroll:nth-child(3) { animation-delay: 0.3s; }
+.animate-on-scroll:nth-child(4) { animation-delay: 0.4s; }
+</style>
+{% endblock %}

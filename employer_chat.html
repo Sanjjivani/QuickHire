@@ -1,0 +1,577 @@
+{% extends "base.html" %}
+{% block title %}Employer Chat - QuickHire{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row g-4">
+        <!-- Chat List Sidebar -->
+        <div class="col-md-4 col-lg-3">
+            <div class="card card-modern shadow-sm h-100">
+                <div class="card-header card-header-modern d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0 text-white">
+                        <i class="fas fa-comments me-2"></i>Chats
+                    </h4>
+                    <a href="{{ url_for('direct_hire') }}" class="btn btn-light btn-sm">
+                        <i class="fas fa-user-plus me-1"></i>New
+                    </a>
+                </div>
+                
+                <div class="card-body p-0">
+                    {% if chat_rooms %}
+                        <div class="list-group list-group-flush">
+                            {% for room in chat_rooms %}
+                                <a href="{{ url_for('chat_room', room_id=room.id) }}" 
+                                   class="list-group-item list-group-item-action p-3 border-bottom {% if room.id == current_room.id %}active{% endif %}">
+                                    <div class="d-flex align-items-start">
+                                        <div class="flex-shrink-0 position-relative">
+                                            <div class="chat-avatar">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            {% if room.messages and room.messages[-1].sender_id != user.id and not room.messages[-1].is_read %}
+                                                <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-white rounded-circle">
+                                                    <span class="visually-hidden">New messages</span>
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                <h6 class="mb-0 {% if room.id == current_room.id %}text-white{% else %}text-primary{% endif %}">
+                                                    {{ room.jobseeker.jobseeker_name }}
+                                                </h6>
+                                                <small class="{% if room.id == current_room.id %}text-white-50{% else %}text-muted{% endif %}">
+                                                    {{ room.last_message_at.strftime('%H:%M') }}
+                                                </small>
+                                            </div>
+                                            <p class="mb-1 small {% if room.id == current_room.id %}text-white-50{% else %}text-muted{% endif %} text-truncate">
+                                                {% if room.messages %}
+                                                    {{ room.messages[-1].message|truncate(35) }}
+                                                {% else %}
+                                                    No messages yet
+                                                {% endif %}
+                                            </p>
+                                            <div class="d-flex align-items-center">
+                                                <small class="{% if room.id == current_room.id %}text-white-50{% else %}text-muted{% endif %} me-2">
+                                                    <i class="fas fa-tools me-1"></i>
+                                                    {{ room.jobseeker.skills.split(',')[0] if room.jobseeker.skills else 'No skills' }}
+                                                </small>
+                                                {% if room.jobseeker.id in hired_seeker_ids %}
+                                                    <span class="badge bg-success rounded-pill" style="font-size: 0.6rem;">
+                                                        Hired
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Active Chats</h5>
+                            <p class="text-muted mb-3">Start chatting with job seekers to discuss opportunities.</p>
+                            <a href="{{ url_for('direct_hire') }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-user-plus me-1"></i>Find Job Seekers
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="col-md-8 col-lg-9">
+            <div class="card card-modern shadow-sm h-100">
+                {% if current_room %}
+                <div class="card-header card-header-modern d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="chat-avatar me-3">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-0 text-white">{{ current_room.jobseeker.jobseeker_name }}</h4>
+                            <div class="d-flex align-items-center text-white-50">
+                                <small class="me-3">
+                                    <i class="fas fa-tools me-1"></i>
+                                    {{ current_room.jobseeker.skills or 'No skills specified' }}
+                                </small>
+                                <small>
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    {{ current_room.jobseeker.location }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        {% if current_room.jobseeker.id not in hired_seeker_ids %}
+                            <button type="button" class="btn btn-success btn-sm" 
+                                    onclick="confirmHire('{{ current_room.jobseeker.jobseeker_name }}', {{ current_room.jobseeker.id }})">
+                                <i class="fas fa-user-check me-1"></i>Hire Now
+                            </button>
+                        {% else %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check me-1"></i>Already Hired
+                            </span>
+                        {% endif %}
+                        <a href="{{ url_for('direct_hire') }}" class="btn btn-light btn-sm">
+                            <i class="fas fa-search me-1"></i>Find More
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body p-0 d-flex flex-column">
+                    <!-- Messages Container -->
+                    <div id="messages-container" class="flex-grow-1 p-3" style="height: 500px; overflow-y: auto; background: var(--bg-secondary);">
+                        {% for message in messages %}
+                            <div class="message-wrapper mb-3 {% if message.sender_id == user.id %}text-end{% endif %}">
+                                <div class="d-inline-block" style="max-width: 70%;">
+                                    <div class="message-bubble {% if message.sender_id == user.id %}message-sent{% else %}message-received{% endif %}">
+                                        <div class="message-content">
+                                            <p class="mb-1">{{ message.message }}</p>
+                                            <div class="message-meta d-flex align-items-center {% if message.sender_id == user.id %}justify-content-end{% endif %}">
+                                                <small class="message-time">{{ message.sent_at.strftime('%H:%M') }}</small>
+                                                {% if message.sender_id == user.id and message.is_read %}
+                                                    <i class="fas fa-check-double text-primary ms-1 small"></i>
+                                                {% elif message.sender_id == user.id %}
+                                                    <i class="fas fa-check text-muted ms-1 small"></i>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-comment-dots fa-2x text-muted mb-3"></i>
+                                <h5 class="text-muted">Start the Conversation</h5>
+                                <p class="text-muted">Send the first message to discuss opportunities with {{ current_room.jobseeker.jobseeker_name }}.</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Typing Indicator -->
+                    <div id="typing-indicator" class="px-3 py-2" style="display: none;">
+                        <div class="d-flex align-items-center">
+                            <div class="typing-dots me-2">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            <small class="text-muted">
+                                <span id="typing-user"></span> is typing...
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <!-- Message Input Form -->
+                    <div class="border-top bg-white">
+                        <form id="message-form" class="p-3">
+                            <input type="hidden" id="room-id" value="{{ current_room.id }}">
+                            <div class="input-group">
+                                <textarea id="message-input" 
+                                          class="form-control" 
+                                          placeholder="Type your message..." 
+                                          aria-label="Type your message"
+                                          rows="1"
+                                          style="resize: none;"
+                                          maxlength="1000"
+                                          required></textarea>
+                                <button type="submit" class="btn btn-primary" id="send-button">
+                                    <i class="fas fa-paper-plane"></i>
+                                    <span class="visually-hidden">Send message</span>
+                                </button>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <div class="form-text text-muted">
+                                    Press Enter to send. Maximum 1000 characters.
+                                </div>
+                                <div id="char-count" class="text-muted small">0/1000</div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Empty State when no room is selected -->
+                <div class="card-body text-center py-5 d-flex flex-column justify-content-center">
+                    <div class="mb-4">
+                        <i class="fas fa-comments fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted mb-3">Welcome to Employer Chat</h4>
+                        <p class="text-muted mb-4">Select a conversation from the sidebar or start chatting with new job seekers.</p>
+                    </div>
+                    <div class="d-flex gap-3 justify-content-center">
+                        <a href="{{ url_for('direct_hire') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-user-plus me-2"></i>Find Job Seekers
+                        </a>
+                        <a href="{{ url_for('jobs') }}" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-briefcase me-2"></i>View Jobs
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SocketIO Script -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+    // Initialize SocketIO connection
+    const socket = io();
+    let roomId = {{ current_room.id if current_room else 0 }};
+    let typingTimer;
+    
+    if (roomId) {
+        socket.emit('join_room', { room_id: roomId });
+    }
+    
+    // Auto-resize textarea
+    const messageInput = document.getElementById('message-input');
+    if (messageInput) {
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            
+            // Update character count
+            const charCount = document.getElementById('char-count');
+            if (charCount) {
+                charCount.textContent = `${this.value.length}/1000`;
+                
+                // Change color when approaching limit
+                if (this.value.length > 900) {
+                    charCount.classList.add('text-danger');
+                } else {
+                    charCount.classList.remove('text-danger');
+                }
+            }
+            
+            // Typing indicator
+            if (roomId && this.value.length > 0) {
+                socket.emit('typing', { room_id: roomId });
+                clearTimeout(typingTimer);
+                typingTimer = setTimeout(() => {
+                    socket.emit('stop_typing', { room_id: roomId });
+                }, 1000);
+            }
+        });
+        
+        // Handle Enter key (submit on Enter, new line on Shift+Enter)
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('message-form').dispatchEvent(new Event('submit'));
+            }
+        });
+    }
+    
+    function scrollToBottom() {
+        const container = document.getElementById('messages-container');
+        if (container) {
+            container.scrollTop = container.scrollHeight;
+        }
+    }
+    
+    // Initial scroll
+    document.addEventListener('DOMContentLoaded', function() {
+        scrollToBottom();
+    });
+    
+    // Send message functionality
+    document.getElementById('message-form')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const message = messageInput.value.trim();
+        
+        if (message && roomId) {
+            const sendButton = document.getElementById('send-button');
+            sendButton.disabled = true;
+            
+            socket.emit('send_message', {
+                room_id: roomId,
+                message: message
+            });
+            
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            
+            // Reset character count
+            const charCount = document.getElementById('char-count');
+            if (charCount) {
+                charCount.textContent = '0/1000';
+                charCount.classList.remove('text-danger');
+            }
+            
+            sendButton.disabled = false;
+            
+            // Stop typing indicator
+            socket.emit('stop_typing', { room_id: roomId });
+        }
+    });
+    
+    // Receive new message
+    socket.on('new_message', function(data) {
+        const messagesContainer = document.getElementById('messages-container');
+        const isOwn = data.sender_id === {{ user.id }};
+        
+        const messageHtml = `
+            <div class="message-wrapper mb-3 ${isOwn ? 'text-end' : ''}">
+                <div class="d-inline-block" style="max-width: 70%;">
+                    <div class="message-bubble ${isOwn ? 'message-sent' : 'message-received'}">
+                        <div class="message-content">
+                            <p class="mb-1">${escapeHtml(data.message)}</p>
+                            <div class="message-meta d-flex align-items-center ${isOwn ? 'justify-content-end' : ''}">
+                                <small class="message-time">${new Date(data.sent_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                                ${isOwn ? '<i class="fas fa-check text-muted ms-1 small"></i>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        if (messagesContainer) {
+            // Remove empty state if exists
+            const emptyState = messagesContainer.querySelector('.text-center');
+            if (emptyState) {
+                emptyState.remove();
+            }
+            
+            messagesContainer.innerHTML += messageHtml;
+            scrollToBottom();
+        }
+    });
+    
+    // Typing indicators
+    socket.on('user_typing', function(data) {
+        document.getElementById('typing-user').textContent = data.username;
+        document.getElementById('typing-indicator').style.display = 'block';
+        scrollToBottom();
+    });
+    
+    socket.on('user_stop_typing', function() {
+        document.getElementById('typing-indicator').style.display = 'none';
+    });
+    
+    // Error handling
+    socket.on('error', function(data) {
+        showAlert('Failed to send message. Please try again.', 'error');
+    });
+    
+    // Hire functionality
+    function confirmHire(seekerName, seekerId) {
+        Swal.fire({
+            title: 'Direct Hire Confirmation',
+            html: `Are you sure you want to hire <strong>${escapeHtml(seekerName)}</strong>?<br>
+                  <small class="text-muted">This will create a direct employment record.</small>`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Hire Now',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#6c757d',
+            backdrop: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                hireJobSeeker(seekerId, seekerName);
+            }
+        });
+    }
+    
+    function hireJobSeeker(seekerId, seekerName) {
+        fetch(`/hire_directly/${seekerId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    title: 'Success!',
+                    html: `<strong>${escapeHtml(seekerName)}</strong> has been hired successfully!`,
+                    icon: 'success',
+                    confirmButtonText: 'Great!'
+                }).then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire({
+                    title: 'Hiring Failed',
+                    text: data.message,
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                title: 'Error!',
+                text: 'An error occurred while hiring.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        });
+    }
+    
+    // Utility functions
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    function showAlert(message, type) {
+        const alertClass = type === 'error' ? 'alert-danger' : 'alert-success';
+        const alertHtml = `
+            <div class="alert ${alertClass} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3" role="alert" style="z-index: 9999;">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', alertHtml);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            const alert = document.querySelector('.alert');
+            if (alert) {
+                alert.remove();
+            }
+        }, 5000);
+    }
+</script>
+
+<style>
+.chat-avatar {
+    width: 45px;
+    height: 45px;
+    background: var(--gradient-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.1rem;
+}
+
+.message-bubble {
+    border-radius: 18px;
+    padding: 12px 16px;
+    max-width: 100%;
+    word-wrap: break-word;
+}
+
+.message-sent {
+    background: var(--gradient-primary);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.message-received {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-bottom-left-radius: 4px;
+}
+
+.message-meta {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+.typing-dots {
+    display: inline-flex;
+    gap: 3px;
+}
+
+.typing-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing {
+    0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+#messages-container {
+    scroll-behavior: smooth;
+}
+
+#messages-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+#messages-container::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+#messages-container::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+#messages-container::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .col-md-4 {
+        margin-bottom: 1rem;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .message-bubble {
+        max-width: 85%;
+    }
+    
+    .chat-avatar {
+        width: 35px;
+        height: 35px;
+        font-size: 0.9rem;
+    }
+    
+    .card-header-modern .btn {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .message-received {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+}
+
+[data-theme="dark"] #messages-container {
+    background: var(--gray-800);
+}
+
+[data-theme="dark"] .border-top {
+    border-top-color: var(--gray-700) !important;
+}
+
+[data-theme="dark"] .bg-white {
+    background: var(--gray-800) !important;
+}
+
+[data-theme="dark"] .form-control {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+    color: var(--gray-100);
+}
+
+[data-theme="dark"] .form-control:focus {
+    background: var(--gray-700);
+    border-color: var(--primary);
+    color: var(--gray-100);
+}
+</style>
+{% endblock %}

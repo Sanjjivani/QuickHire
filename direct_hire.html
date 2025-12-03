@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+{% block title %}Direct Hire - QuickHire{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 fw-bold text-gradient mb-2">
+                        <i class="fas fa-user-plus me-2"></i>Direct Hire
+                    </h1>
+                    <p class="text-muted mb-0">Browse and hire job seekers directly based on their skills and experience</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-primary fs-6">
+                        <i class="fas fa-users me-1"></i>{{ job_seekers|length }} Seekers
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Sidebar Filters -->
+        <div class="col-lg-3">
+            <div class="card card-modern shadow-sm">
+                <div class="card-header card-header-modern">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-filter me-2"></i>Filters
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Skill Filter -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Filter by Skill</label>
+                        <div class="list-group list-group-flush">
+                            <a href="{{ url_for('direct_hire', category='all') }}" 
+                               class="list-group-item list-group-item-action border-0 rounded {% if current_category == 'all' %}active{% endif %}">
+                                <i class="fas fa-th-list me-2"></i>All Skills
+                            </a>
+                            {% for skill in ['Cooking', 'Cleaning', 'Washing', 'Driving', 'Babysitting'] %}
+                                <a href="{{ url_for('direct_hire', category=skill) }}" 
+                                   class="list-group-item list-group-item-action border-0 rounded {% if current_category == skill %}active{% endif %}">
+                                    <i class="fas fa-{{ 'utensils' if skill == 'Cooking' else 'broom' if skill == 'Cleaning' else 'tshirt' if skill == 'Washing' else 'car' if skill == 'Driving' else 'baby' }} me-2"></i>
+                                    {{ skill }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="border-top pt-3">
+                        <h6 class="fw-semibold mb-3">
+                            <i class="fas fa-chart-bar me-2"></i>Quick Stats
+                        </h6>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Total Seekers:</span>
+                            <strong>{{ job_seekers|length }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Hired by You:</span>
+                            <strong>{{ hired_seeker_ids|length }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help Card -->
+            <div class="card card-modern shadow-sm mt-4">
+                <div class="card-body">
+                    <h6 class="fw-semibold mb-3">
+                        <i class="fas fa-info-circle me-2 text-primary"></i>How it Works
+                    </h6>
+                    <ul class="list-unstyled small text-muted">
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Browse skilled job seekers
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-comment text-info me-2"></i>
+                            Chat before hiring
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-user-check text-success me-2"></i>
+                            Hire directly in one click
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-9">
+            <!-- Search Bar -->
+            <div class="card card-modern shadow-sm mb-4">
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('direct_hire') }}" class="row g-3">
+                        <div class="col-md-8">
+                            <label for="searchInput" class="form-label visually-hidden">Search job seekers</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-transparent">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                <input type="text" 
+                                       id="searchInput"
+                                       class="form-control" 
+                                       name="search" 
+                                       placeholder="Search by name, skills, or location..." 
+                                       value="{{ search_query }}"
+                                       aria-describedby="searchHelp">
+                            </div>
+                            <div id="searchHelp" class="form-text">Search across names, skills, and locations</div>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search me-2"></i>Search
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Job Seekers Grid -->
+            {% if job_seekers %}
+                <div class="row g-4" id="jobSeekersGrid">
+                    {% for seeker in job_seekers %}
+                        <div class="col-xl-4 col-lg-6 col-md-6">
+                            <div class="card card-modern h-100 seeker-card" data-seeker-id="{{ seeker.id }}">
+                                <div class="card-body">
+                                    <!-- Header with Name and Hire Status -->
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <h5 class="card-title text-primary mb-0">{{ seeker.jobseeker_name }}</h5>
+                                        {% if seeker.id in hired_seeker_ids %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>Hired
+                                            </span>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Location -->
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fas fa-map-marker-alt text-muted me-2"></i>
+                                        <span class="text-muted">{{ seeker.location }}</span>
+                                    </div>
+
+                                    <!-- Skills -->
+                                    <div class="mb-3">
+                                        <label class="small fw-semibold text-muted mb-2 d-block">Skills</label>
+                                        {% if seeker.skills %}
+                                            <div class="d-flex flex-wrap gap-1">
+                                                {% for skill in seeker.skills.split(',') %}
+                                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">
+                                                        {{ skill.strip() }}
+                                                    </span>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted small">No skills specified</span>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Experience -->
+                                    {% if seeker.years_experience %}
+                                    <div class="mb-3">
+                                        <label class="small fw-semibold text-muted mb-1 d-block">Experience</label>
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-briefcase text-warning me-2"></i>
+                                            <span>{{ seeker.years_experience }} year{{ 's' if seeker.years_experience > 1 }}</span>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- Gender -->
+                                    <div class="mb-3">
+                                        <label class="small fw-semibold text-muted mb-1 d-block">Gender</label>
+                                        <span class="text-muted">{{ seeker.gender|capitalize if seeker.gender else 'Not specified' }}</span>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="d-grid gap-2">
+                                        {% if seeker.id not in hired_seeker_ids %}
+                                            <button class="btn btn-success hire-btn" 
+                                                    data-seeker-id="{{ seeker.id }}"
+                                                    data-seeker-name="{{ seeker.jobseeker_name }}">
+                                                <i class="fas fa-user-check me-2"></i>Hire Now
+                                            </button>
+                                            <a href="{{ url_for('start_chat', jobseeker_id=seeker.id) }}" 
+                                               class="btn btn-outline-primary">
+                                                <i class="fas fa-comment me-2"></i>Start Chat
+                                            </a>
+                                        {% else %}
+                                            <span class="badge bg-success w-100 py-2">
+                                                <i class="fas fa-check me-1"></i>Already Hired
+                                            </span>
+                                            <a href="{{ url_for('start_chat', jobseeker_id=seeker.id) }}" 
+                                               class="btn btn-outline-primary">
+                                                <i class="fas fa-comment me-2"></i>Continue Chat
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <!-- Empty State -->
+                <div class="card card-modern text-center py-5">
+                    <div class="card-body">
+                        <i class="fas fa-users fa-4x text-muted mb-4"></i>
+                        <h3 class="text-muted mb-3">No Job Seekers Found</h3>
+                        <p class="text-muted mb-4">
+                            {% if current_category != 'all' or search_query %}
+                                No job seekers match your current filters. Try adjusting your search criteria.
+                            {% else %}
+                                No job seekers are currently available for direct hire.
+                            {% endif %}
+                        </p>
+                        <div class="d-flex gap-2 justify-content-center">
+                            {% if current_category != 'all' or search_query %}
+                                <a href="{{ url_for('direct_hire') }}" class="btn btn-primary">
+                                    <i class="fas fa-refresh me-2"></i>Clear Filters
+                                </a>
+                            {% endif %}
+                            <a href="{{ url_for('jobs') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-briefcase me-2"></i>Browse Jobs
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Loading State (Hidden by default) -->
+            <div id="loadingState" class="text-center py-5" style="display: none;">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted">Loading job seekers...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Hire button functionality
+    document.querySelectorAll('.hire-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const seekerId = this.getAttribute('data-seeker-id');
+            const seekerName = this.getAttribute('data-seeker-name');
+            
+            Swal.fire({
+                title: 'Confirm Direct Hire',
+                html: `Are you sure you want to hire <strong>${escapeHtml(seekerName)}</strong>?<br><small class="text-muted">This will create a direct hiring record.</small>`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Hire Now',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                backdrop: true,
+                allowOutsideClick: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    hireJobSeeker(seekerId, seekerName);
+                }
+            });
+        });
+    });
+    
+    function hireJobSeeker(seekerId, seekerName) {
+        const hireBtn = document.querySelector(`.hire-btn[data-seeker-id="${seekerId}"]`);
+        const originalText = hireBtn.innerHTML;
+        
+        // Show loading state
+        hireBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Hiring...';
+        hireBtn.disabled = true;
+        
+        fetch(`/hire_directly/${seekerId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    title: 'Success!',
+                    html: `<strong>${escapeHtml(seekerName)}</strong> has been hired successfully!`,
+                    icon: 'success',
+                    confirmButtonText: 'Great!',
+                    confirmButtonColor: '#28a745'
+                }).then(() => {
+                    // Update UI to show hired status
+                    const seekerCard = document.querySelector(`.seeker-card[data-seeker-id="${seekerId}"]`);
+                    if (seekerCard) {
+                        // Reload the page to reflect changes
+                        location.reload();
+                    }
+                });
+            } else {
+                throw new Error(data.message || 'Failed to hire job seeker');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                title: 'Hiring Failed',
+                html: `Unable to hire <strong>${escapeHtml(seekerName)}</strong>.<br><small class="text-muted">${error.message}</small>`,
+                icon: 'error',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#dc3545'
+            });
+            
+            // Reset button
+            hireBtn.innerHTML = originalText;
+            hireBtn.disabled = false;
+        });
+    }
+    
+    // Search functionality enhancement
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        let searchTimeout;
+        
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                if (this.value.length >= 2 || this.value.length === 0) {
+                    // Show loading state
+                    document.getElementById('loadingState').style.display = 'block';
+                    document.getElementById('jobSeekersGrid').style.display = 'none';
+                    
+                    // Submit form after delay for better UX
+                    this.form.submit();
+                }
+            }, 500);
+        });
+    }
+    
+    // Utility function to escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Add animation to cards on load
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+    
+    // Observe all seeker cards
+    document.querySelectorAll('.seeker-card').forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(card);
+    });
+});
+</script>
+
+<style>
+.seeker-card {
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
+}
+
+.seeker-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary);
+}
+
+.card-title {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Skill badges styling */
+.badge.bg-primary.bg-opacity-10 {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .seeker-card {
+        margin-bottom: 1rem;
+    }
+    
+    .col-lg-3 {
+        margin-bottom: 1.5rem;
+    }
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .seeker-card {
+    background: var(--gray-800);
+    border-color: var(--gray-700);
+}
+
+[data-theme="dark"] .seeker-card:hover {
+    border-color: var(--primary);
+}
+
+[data-theme="dark"] .list-group-item {
+    background: var(--gray-800);
+    color: var(--gray-300);
+    border-color: var(--gray-700);
+}
+
+[data-theme="dark"] .list-group-item.active {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+[data-theme="dark"] .input-group-text {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+    color: var(--gray-300);
+}
+</style>
+{% endblock %}

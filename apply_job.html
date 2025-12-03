@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Apply for Job{% endblock %}
+{% block content %}
+<div class="container py-5 animate__animated animate__fadeIn">
+    <h2 class="text-center mb-4"><i class="fas fa-briefcase me-2"></i>Apply for {{ job.title }}</h2>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category == 'error' and 'danger' or 'success' }}" role="alert">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="card shadow-lg card-royal-gradient text-white">
+                <div class="card-body p-4">
+                    <h4>Job Details</h4>
+                    <p><strong>Company:</strong> {{ job.employer.company_name or job.employer.employer_name }}</p>
+                    <p><strong>Location:</strong> {{ job.location }}</p>
+                    <p><strong>Salary:</strong> ₹{{ job.pay }}</p>
+                    <p><strong>Skills Required:</strong> {{ job.required_skills }}</p>
+                    <p>{{ job.description }}</p>
+                    <form method="POST" action="">
+                        {{ form.hidden_tag() }}
+                        <button type="submit" class="btn btn-royal-gradient w-100"><i class="fas fa-check me-2"></i>Submit Application</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,2019 @@
+{% if profile_type == 'employer' %}
+    {% include 'employer_profile.html' %}
+{% else %}
+{% extends "base.html" %}
+
+{% block title %}{{ profile.jobseeker_name }} - Profile{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="header-background">
+            <div class="background-overlay"></div>
+        </div>
+        <div class="header-content">
+            <div class="profile-avatar">
+                <div class="avatar-icon">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+            <div class="profile-info">
+                <h1 class="profile-name">{{ profile.jobseeker_name }}</h1>
+                <p class="profile-role">Job Seeker Account</p>
+                <div class="profile-meta">
+                    <span class="meta-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        {{ profile.location }}
+                    </span>
+                    {% if profile.email %}
+                    <span class="meta-item">
+                        <i class="fas fa-envelope"></i>
+                        {{ profile.email }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-content">
+        <div class="content-layout">
+            <!-- Main Content Column -->
+            <div class="main-column">
+                <!-- Profile Editing Section -->
+                {% if current_user and user.id == current_user.id %}
+                <section class="profile-section">
+                    <div class="section-header">
+                        <h2>
+                            <i class="fas fa-user-edit"></i>
+                            Profile Management
+                        </h2>
+                        <div class="profile-actions-header">
+                            <button id="toggleEditProfile" class="btn-modern btn-primary-modern btn-sm">
+                                <i class="fas fa-edit me-1"></i>Edit Profile
+                            </button>
+                            <div id="editProfileActions" class="edit-actions" style="display: none;">
+                                <button id="saveProfile" class="btn-modern btn-primary-modern btn-sm me-2">
+                                    <i class="fas fa-save me-1"></i>Save Changes
+                                </button>
+                                <button id="cancelEdit" class="btn-modern btn-outline-modern btn-sm">
+                                    <i class="fas fa-times me-1"></i>Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-content">
+                        <div class="profile-editing-content">
+                            <!-- Read-only View -->
+                            <div id="profileReadView">
+                                <div class="details-grid">
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="detail-content">
+                                            <label>Full Name</label>
+                                            <p class="info-value" id="displayName">{{ profile.jobseeker_name }}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fas fa-envelope"></i>
+                                        </div>
+                                        <div class="detail-content">
+                                            <label>Email Address</label>
+                                            <p class="info-value" id="displayEmail">
+                                                {% if profile.email %}
+                                                    {{ profile.email }}
+                                                {% else %}
+                                                    <span class="text-muted">Not provided</span>
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fas fa-tools"></i>
+                                        </div>
+                                        <div class="detail-content">
+                                            <label>Skills</label>
+                                            <p class="info-value" id="displaySkills">
+                                                {% if profile.skills %}
+                                                    {{ profile.skills }}
+                                                {% else %}
+                                                    <span class="text-muted">Not specified</span>
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fas fa-briefcase"></i>
+                                        </div>
+                                        <div class="detail-content">
+                                            <label>Years of Experience</label>
+                                            <p class="info-value" id="displayExperience">
+                                                {% if profile.years_experience %}
+                                                    {{ profile.years_experience }} year{{ 's' if profile.years_experience != 1 }}
+                                                {% else %}
+                                                    <span class="text-muted">Not specified</span>
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fas fa-venus-mars"></i>
+                                        </div>
+                                        <div class="detail-content">
+                                            <label>Gender</label>
+                                            <p class="info-value" id="displayGender">
+                                                {% if profile.gender %}
+                                                    {{ profile.gender | capitalize }}
+                                                {% else %}
+                                                    <span class="text-muted">Not specified</span>
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </div>
+                                        <div class="detail-content">
+                                            <label>Location</label>
+                                            <p class="info-value" id="displayLocation">{{ profile.location }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Editable View -->
+                            <div id="profileEditView" style="display: none;">
+                                <form id="profileEditForm" class="profile-edit-form">
+                                    <div class="edit-form-grid">
+                                        <div class="form-group-modern">
+                                            <label for="editName" class="form-label">
+                                                <i class="fas fa-user me-2"></i>Full Name
+                                            </label>
+                                            <input type="text" class="form-control" id="editName" name="name" 
+                                                   value="{{ profile.jobseeker_name }}" required>
+                                            <div class="form-text">Your full name as you'd like employers to see it</div>
+                                        </div>
+
+                                        <div class="form-group-modern">
+                                            <label for="editEmail" class="form-label">
+                                                <i class="fas fa-envelope me-2"></i>Email Address
+                                            </label>
+                                            <input type="email" class="form-control" id="editEmail" name="email" 
+                                                   value="{{ profile.email or '' }}">
+                                            <div class="form-text">Your contact email for employers</div>
+                                        </div>
+
+                                        <div class="form-group-modern">
+                                            <label for="editSkills" class="form-label">
+                                                <i class="fas fa-tools me-2"></i>Skills
+                                            </label>
+                                            <input type="text" class="form-control" id="editSkills" name="skills" 
+                                                   value="{{ profile.skills or '' }}" 
+                                                   placeholder="e.g., Cooking, Cleaning, Driving">
+                                            <div class="form-text">List your main skills separated by commas</div>
+                                        </div>
+
+                                        <div class="form-group-modern">
+                                            <label for="editExperience" class="form-label">
+                                                <i class="fas fa-briefcase me-2"></i>Years of Experience
+                                            </label>
+                                            <input type="number" class="form-control" id="editExperience" name="years_experience" 
+                                                   value="{{ profile.years_experience or 0 }}" min="0" max="50">
+                                            <div class="form-text">Your total years of professional experience</div>
+                                        </div>
+
+                                        <div class="form-group-modern">
+                                            <label for="editGender" class="form-label">
+                                                <i class="fas fa-venus-mars me-2"></i>Gender
+                                            </label>
+                                            <select class="form-control" id="editGender" name="gender">
+                                                <option value="">Select Gender</option>
+                                                <option value="male" {% if profile.gender == 'male' %}selected{% endif %}>Male</option>
+                                                <option value="female" {% if profile.gender == 'female' %}selected{% endif %}>Female</option>
+                                                <option value="other" {% if profile.gender == 'other' %}selected{% endif %}>Other</option>
+                                            </select>
+                                            <div class="form-text">Your gender identity</div>
+                                        </div>
+
+                                        <div class="form-group-modern">
+                                            <label for="editLocation" class="form-label">
+                                                <i class="fas fa-map-marker-alt me-2"></i>Location
+                                            </label>
+                                            <input type="text" class="form-control" id="editLocation" name="location" 
+                                                   value="{{ profile.location }}" required>
+                                            <div class="form-text">Your current city or area</div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Loading State -->
+                            <div id="profileLoading" class="profile-loading" style="display: none;">
+                                <div class="loading-spinner"></div>
+                                <p>Saving changes...</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                {% endif %}
+
+                <!-- Profile Details Card - Only show to employers viewing job seeker profiles -->
+                {% if current_user and current_user.role == 'employer' and user.id != current_user.id %}
+                <section class="profile-section">
+                    <div class="section-header">
+                        <h2>
+                            <i class="fas fa-info-circle"></i>
+                            Profile Details
+                        </h2>
+                    </div>
+                    <div class="section-content">
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <label>Full Name</label>
+                                    <p>{{ profile.jobseeker_name }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fas fa-phone"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <label>Phone Number</label>
+                                    <p>
+                                        {% if current_user and (user.id == current_user.id or (current_user.role == 'employer' and user.applications | selectattr('status', 'equalto', 'hired') | selectattr('job.employer_id', 'equalto', current_user.employer.id) | list)) %}
+                                            {{ user.phone }}
+                                        {% else %}
+                                            <span class="text-muted">Contact after hiring</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <label>Location</label>
+                                    <p>{{ profile.location }}</p>
+                                </div>
+                            </div>
+                            
+                            {% if profile.email %}
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <label>Email Address</label>
+                                    <p>{{ profile.email }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if profile.skills %}
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fas fa-tools"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <label>Skills</label>
+                                    <p>{{ profile.skills }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if profile.years_experience is not none %}
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fas fa-briefcase"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <label>Years of Experience</label>
+                                    <p>{{ profile.years_experience }} year{{ 's' if profile.years_experience != 1 }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if profile.gender %}
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fas fa-venus-mars"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <label>Gender</label>
+                                    <p>{{ profile.gender | capitalize }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </section>
+                {% endif %}
+
+                <!-- Job Applications Section -->
+                <section class="profile-section">
+                    <div class="section-header">
+                        <h2>
+                            <i class="fas fa-clipboard-list"></i>
+                            Job Applications
+                        </h2>
+                        <span class="section-badge">{{ user.jobseeker.applications | length }}</span>
+                    </div>
+                    <div class="section-content">
+                        {% if user.jobseeker.applications %}
+                        <div class="applications-table">
+                            <div class="table-responsive">
+                                <table class="modern-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Job Title</th>
+                                            <th>Employer</th>
+                                            <th>Location</th>
+                                            <th>Salary</th>
+                                            <th>Status</th>
+                                            <th>Applied On</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for application in user.jobseeker.applications %}
+                                        <tr>
+                                            <td>
+                                                <div class="job-info">
+                                                    <i class="fas fa-briefcase"></i>
+                                                    <div>
+                                                        <strong>{{ application.job.title }}</strong>
+                                                        <small>{{ application.job.required_skills }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <strong>{{ application.job.employer.employer_name }}</strong>
+                                                {% if application.job.employer.company_name %}
+                                                <br><small>{{ application.job.employer.company_name }}</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <i class="fas fa-map-marker-alt"></i>
+                                                {{ application.job.location }}
+                                            </td>
+                                            <td class="salary">₹{{ "%.0f"|format(application.job.pay) }}</td>
+                                            <td>
+                                                <span class="status-badge {{ application.status }}">
+                                                    {{ application.status | capitalize }}
+                                                </span>
+                                            </td>
+                                            <td class="date">
+                                                {{ application.applied_at.strftime('%b %d, %Y') }}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-clipboard-list"></i>
+                            <h3>No Job Applications</h3>
+                            <p>This job seeker hasn't applied to any jobs yet.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </section>
+
+                <!-- Reviews Section -->
+                <section class="profile-section">
+                    <div class="section-header">
+                        <h2>
+                            <i class="fas fa-star"></i>
+                            Reviews Received
+                        </h2>
+                        <span class="section-badge">{{ user.reviews_received | length }}</span>
+                    </div>
+                    <div class="section-content">
+                        {% if user.reviews_received %}
+                        <div class="reviews-stats">
+                            <div class="rating-overview">
+                                <div class="average-rating">
+                                    {% set total_rating = user.reviews_received | sum(attribute='rating') %}
+                                    {% set avg_rating = (total_rating / user.reviews_received | length) if user.reviews_received else 0 %}
+                                    <div class="rating-number">{{ "%.1f" | format(avg_rating) }}</div>
+                                    <div class="rating-stars">
+                                        {% for i in range(5) %}
+                                            <i class="fas fa-star {{ 'active' if i < avg_rating|round(0, 'floor')|int else '' }}"></i>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="rating-count">{{ user.reviews_received | length }} review{{ 's' if user.reviews_received | length != 1 }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="reviews-list">
+                            {% for review in user.reviews_received %}
+                            <div class="review-card">
+                                <div class="review-header">
+                                    <div class="reviewer-info">
+                                        <h4>{{ review.job.title if review.job else "Completed Job" }}</h4>
+                                        <p>By {{ review.reviewer.employer.employer_name if review.reviewer.role == 'employer' else review.reviewer.jobseeker.jobseeker_name }}</p>
+                                    </div>
+                                    <div class="review-rating">
+                                        <div class="stars">
+                                            {% for i in range(5) %}
+                                                <i class="fas fa-star {{ 'active' if i < review.rating else '' }}"></i>
+                                            {% endfor %}
+                                        </div>
+                                        <small>{{ review.created_at.strftime('%b %d, %Y') }}</small>
+                                    </div>
+                                </div>
+                                {% if review.comment %}
+                                <div class="review-comment">
+                                    "{{ review.comment }}"
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-star"></i>
+                            <h3>No Reviews Yet</h3>
+                            <p>This job seeker hasn't received any reviews yet.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </section>
+            </div>
+
+            <!-- Sidebar Column -->
+            <div class="sidebar-column">
+                <!-- Quick Actions -->
+                <div class="sidebar-card">
+                    <h3>Quick Actions</h3>
+                    <div class="action-buttons">
+                        {% if current_user and user.id == current_user.id %}
+                            <a href="{{ url_for('dashboard') }}" class="action-btn primary">
+                                <i class="fas fa-tachometer-alt"></i>
+                                Go to Dashboard
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('start_chat_with_employer', employer_id=current_user.employer.id) if current_user and current_user.role == 'employer' else '#' }}" 
+                               class="action-btn primary">
+                                <i class="fas fa-comment"></i>
+                                Start Chat
+                            </a>
+                        {% endif %}
+                        <a href="{{ url_for('index') }}" class="action-btn secondary">
+                            <i class="fas fa-home"></i>
+                            Back to Home
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Job Seeker Stats -->
+                <div class="sidebar-card">
+                    <h3>Job Seeker Stats</h3>
+                    <div class="stats-list">
+                        <div class="stat-item">
+                            <div class="stat-icon">
+                                <i class="fas fa-paper-plane"></i>
+                            </div>
+                            <div class="stat-info">
+                                <strong>{{ user.jobseeker.applications | length }}</strong>
+                                <span>Applications</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-info">
+                                <strong>
+                                    {% set hired_count = user.jobseeker.applications | selectattr('status', 'equalto', 'hired') | list | length %}
+                                    {{ hired_count }}
+                                </strong>
+                                <span>Jobs Hired</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="stat-info">
+                                <strong>{{ user.reviews_received | length }}</strong>
+                                <span>Reviews</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skills Section -->
+                {% if profile.skills %}
+                <div class="sidebar-card">
+                    <h3>Skills</h3>
+                    <div class="skills-container-sidebar">
+                        {% for skill in profile.skills.split(',') %}
+                            <span class="skill-badge-small">
+                                <i class="fas fa-check"></i>
+                                {{ skill.strip() }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Contact Information -->
+                <div class="sidebar-card">
+                    <h3>Contact Info</h3>
+                    <div class="contact-info">
+                        {% if current_user and (user.id == current_user.id or (current_user.role == 'employer' and user.applications | selectattr('status', 'equalto', 'hired') | selectattr('job.employer_id', 'equalto', current_user.employer.id) | list)) %}
+                        <div class="contact-item">
+                            <i class="fas fa-phone"></i>
+                            <span>{{ user.phone }}</span>
+                        </div>
+                        {% endif %}
+                        {% if profile.email %}
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <span>{{ profile.email }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>{{ profile.location }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ===== CSS VARIABLES ===== */
+:root {
+    --primary: #4361ee;
+    --secondary: #3a0ca3;
+    --success: #4cc9f0;
+    --warning: #f72585;
+    --danger: #e63946;
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --bg-tertiary: #f1f5f9;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --border-color: #e2e8f0;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --gradient-primary: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+}
+
+[data-theme="dark"] {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-card: #1e293b;
+    --bg-tertiary: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
+    --border-color: #334155;
+}
+
+/* ===== BASE STYLES ===== */
+.profile-container {
+    min-height: 100vh;
+    background: var(--bg-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ===== PROFILE HEADER ===== */
+.profile-header {
+    position: relative;
+    background: var(--gradient-primary);
+    color: white;
+    padding: 4rem 0 3rem;
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.header-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--gradient-primary);
+}
+
+.background-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.header-content {
+    position: relative;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.profile-avatar {
+    flex-shrink: 0;
+}
+
+.avatar-icon {
+    width: 120px;
+    height: 120px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    backdrop-filter: blur(10px);
+    transition: var(--transition-normal);
+}
+
+.avatar-icon:hover {
+    transform: scale(1.05);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.profile-name {
+    font-size: 2.75rem;
+    font-weight: 800;
+    margin: 0 0 0.5rem 0;
+    color: white;
+    line-height: 1.1;
+}
+
+.profile-role {
+    font-size: 1.25rem;
+    opacity: 0.9;
+    margin: 0 0 1.5rem 0;
+    font-weight: 500;
+}
+
+.profile-meta {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1rem;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+.meta-item i {
+    font-size: 1.1rem;
+}
+
+/* ===== PROFILE CONTENT ===== */
+.profile-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem 4rem;
+}
+
+.content-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 2.5rem;
+    align-items: start;
+}
+
+/* ===== PROFILE SECTIONS ===== */
+.profile-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    margin-bottom: 2rem;
+    overflow: hidden;
+    transition: var(--transition-normal);
+    box-shadow: var(--shadow-sm);
+}
+
+.profile-section:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.section-header {
+    padding: 1.75rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.section-header h2 {
+    margin: 0;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.section-header h2 i {
+    color: var(--primary);
+    font-size: 1.25rem;
+}
+
+.section-badge {
+    background: var(--primary);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    min-width: 2.5rem;
+    text-align: center;
+}
+
+.section-content {
+    padding: 2rem;
+}
+
+/* ===== PROFILE EDITING STYLES ===== */
+.profile-actions-header {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.edit-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.profile-edit-form {
+    padding: 0.5rem 0;
+}
+
+.edit-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+}
+
+.form-group-modern {
+    margin-bottom: 1.5rem;
+}
+
+.form-group-modern:last-child {
+    margin-bottom: 0;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+    gap: 0.5rem;
+}
+
+.form-label i {
+    color: var(--primary);
+    width: 16px;
+    text-align: center;
+}
+
+.form-control {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: var(--transition-fast);
+    width: 100%;
+    font-family: inherit;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    background: var(--bg-card);
+}
+
+.form-control:read-only {
+    background: var(--bg-primary);
+    border-color: var(--border-color);
+    cursor: not-allowed;
+}
+
+.form-control.editing {
+    border-color: var(--primary);
+    background: var(--bg-card);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+}
+
+.form-text {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+    line-height: 1.4;
+}
+
+/* Form validation states */
+.form-control.is-valid {
+    border-color: var(--success);
+    box-shadow: 0 0 0 3px rgba(76, 201, 240, 0.1);
+}
+
+.form-control.is-invalid {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.1);
+}
+
+.editing-mode .profile-info-item {
+    border: 2px dashed var(--primary);
+    background: rgba(67, 97, 238, 0.05);
+}
+
+.editing-mode .info-value {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.profile-loading {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-secondary);
+}
+
+.loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--border-color);
+    border-left: 4px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.profile-success {
+    background: rgba(40, 167, 69, 0.1);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    margin: 1rem 0;
+    color: #28a745;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 500;
+}
+
+.profile-error {
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    margin: 1rem 0;
+    color: #dc3545;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 500;
+}
+
+/* ===== DETAILS GRID ===== */
+.details-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    border-radius: var(--radius-md);
+    transition: background var(--transition-fast);
+    border: 1px solid transparent;
+}
+
+.detail-item:hover {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+.detail-icon {
+    width: 56px;
+    height: 56px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    border: 2px solid var(--border-color);
+    transition: var(--transition-fast);
+}
+
+.detail-item:hover .detail-icon {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: scale(1.05);
+}
+
+.detail-content label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-content p {
+    margin: 0;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1.1rem;
+    line-height: 1.4;
+}
+
+.text-muted {
+    color: var(--text-muted) !important;
+    font-style: italic;
+    font-weight: 500 !important;
+}
+
+/* ===== SIDEBAR STYLES ===== */
+.sidebar-column {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    position: sticky;
+    top: 2rem;
+}
+
+.sidebar-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    transition: var(--transition-normal);
+    box-shadow: var(--shadow-sm);
+}
+
+.sidebar-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.sidebar-card h3 {
+    margin: 0 0 1.5rem 0;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.375rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.75rem;
+}
+
+/* Skills in Sidebar */
+.skills-container-sidebar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.skill-badge-small {
+    background: var(--gradient-primary);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: var(--transition-fast);
+}
+
+.skill-badge-small:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Stats List */
+.stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.25rem;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    transition: background var(--transition-fast);
+    border: 1px solid transparent;
+}
+
+.stat-item:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+    transform: translateX(4px);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    transition: var(--transition-fast);
+}
+
+.stat-item:hover .stat-icon {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.stat-info {
+    flex: 1;
+}
+
+.stat-info strong {
+    display: block;
+    color: var(--text-primary);
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.stat-info span {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Contact Info */
+.contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    transition: background var(--transition-fast);
+    border: 1px solid transparent;
+}
+
+.contact-item:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+    transform: translateX(4px);
+}
+
+.contact-item i {
+    color: var(--primary);
+    width: 20px;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.contact-item span {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+/* ===== TABLES ===== */
+.applications-table {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.modern-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.modern-table thead {
+    background: var(--bg-secondary);
+}
+
+.modern-table th {
+    padding: 1.25rem 1.5rem;
+    text-align: left;
+    color: var(--text-primary);
+    font-weight: 700;
+    border-bottom: 2px solid var(--border-color);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modern-table td {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+
+.modern-table tr:last-child td {
+    border-bottom: none;
+}
+
+.modern-table tr {
+    transition: background var(--transition-fast);
+}
+
+.modern-table tr:hover {
+    background: var(--bg-secondary);
+}
+
+.job-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.job-info i {
+    color: var(--primary);
+    font-size: 1.5rem;
+}
+
+.job-info div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.job-info strong {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.job-info small {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.salary {
+    color: var(--success);
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.date {
+    color: var(--text-secondary);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* ===== REVIEWS ===== */
+.reviews-stats {
+    margin-bottom: 2.5rem;
+}
+
+.rating-overview {
+    display: flex;
+    justify-content: center;
+}
+
+.average-rating {
+    text-align: center;
+    padding: 2rem;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--border-color);
+}
+
+.rating-number {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    line-height: 1;
+}
+
+.rating-stars {
+    margin-bottom: 0.75rem;
+}
+
+.rating-stars .fa-star {
+    color: #ffc107;
+    font-size: 1.75rem;
+    margin: 0 0.125rem;
+}
+
+.rating-count {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.reviews-list {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.review-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    transition: var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+.review-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--primary);
+    opacity: 0;
+    transition: var(--transition-fast);
+}
+
+.review-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.review-card:hover::before {
+    opacity: 1;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.25rem;
+    gap: 1rem;
+}
+
+.reviewer-info h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+.reviewer-info p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.review-rating {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.stars {
+    margin-bottom: 0.5rem;
+}
+
+.stars .fa-star {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    margin: 0 0.125rem;
+}
+
+.stars .fa-star.active {
+    color: #ffc107;
+}
+
+.review-rating small {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.review-comment {
+    color: var(--text-secondary);
+    font-style: italic;
+    border-left: 3px solid var(--primary);
+    padding-left: 1.25rem;
+    margin: 0;
+    line-height: 1.6;
+    font-size: 1.05rem;
+}
+
+/* ===== EMPTY STATES ===== */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.empty-state p {
+    margin: 0;
+    opacity: 0.8;
+    font-size: 1.1rem;
+    max-width: 400px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* ===== ACTION BUTTONS ===== */
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    font-weight: 600;
+    transition: var(--transition-normal);
+    text-align: left;
+    border: 2px solid transparent;
+    font-size: 1rem;
+}
+
+.action-btn.primary {
+    background: var(--gradient-primary);
+    color: white;
+}
+
+.action-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.action-btn.secondary {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+}
+
+.action-btn.secondary:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.action-btn i {
+    font-size: 1.25rem;
+    width: 20px;
+    text-align: center;
+}
+
+/* ===== STATUS BADGES ===== */
+.status-badge {
+    padding: 0.625rem 1.25rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    min-width: 80px;
+    text-align: center;
+}
+
+.status-badge.pending {
+    background: rgba(255, 193, 7, 0.15);
+    color: #ffc107;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.status-badge.hired {
+    background: rgba(40, 167, 69, 0.15);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.status-badge.rejected {
+    background: rgba(220, 53, 69, 0.15);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+/* ===== BUTTON STYLES ===== */
+.btn-modern {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    text-decoration: none;
+    border: 2px solid transparent;
+    transition: var(--transition-normal);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-family: inherit;
+}
+
+.btn-modern.btn-sm {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.85rem;
+}
+
+.btn-modern.btn-primary-modern {
+    background: var(--gradient-primary);
+    color: white;
+    border: none;
+}
+
+.btn-modern.btn-primary-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.btn-modern.btn-outline-modern {
+    background: transparent;
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+}
+
+.btn-modern.btn-outline-modern:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1200px) {
+    .content-layout {
+        grid-template-columns: 1fr 340px;
+        gap: 2rem;
+    }
+}
+
+@media (max-width: 1024px) {
+    .content-layout {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    
+    .sidebar-column {
+        position: static;
+        order: -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-content {
+        padding: 0 1.5rem 3rem;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+        padding: 0 1.5rem;
+    }
+    
+    .profile-meta {
+        justify-content: center;
+    }
+    
+    .section-content {
+        padding: 1.5rem;
+    }
+    
+    .section-header {
+        padding: 1.5rem;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .review-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .review-rating {
+        text-align: center;
+    }
+    
+    .profile-actions-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .edit-actions {
+        justify-content: center;
+    }
+    
+    .edit-form-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .profile-header {
+        padding: 3rem 0 2rem;
+    }
+    
+    .profile-name {
+        font-size: 2.25rem;
+    }
+    
+    .avatar-icon {
+        width: 100px;
+        height: 100px;
+        font-size: 2.5rem;
+    }
+    
+    .details-grid {
+        gap: 1.25rem;
+    }
+    
+    .detail-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+        padding: 1.25rem;
+    }
+    
+    .modern-table {
+        font-size: 0.875rem;
+        min-width: 600px;
+    }
+    
+    .modern-table th,
+    .modern-table td {
+        padding: 1rem 0.75rem;
+    }
+    
+    .sidebar-card {
+        padding: 1.5rem;
+    }
+    
+    .action-btn {
+        padding: 1rem 1.25rem;
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-content {
+        padding: 0 1rem 2rem;
+    }
+    
+    .header-content {
+        padding: 0 1rem;
+    }
+    
+    .profile-name {
+        font-size: 2rem;
+    }
+    
+    .profile-role {
+        font-size: 1.1rem;
+    }
+    
+    .meta-item {
+        font-size: 0.9rem;
+    }
+    
+    .section-content {
+        padding: 1.25rem;
+    }
+    
+    .average-rating {
+        padding: 1.5rem;
+    }
+    
+    .rating-number {
+        font-size: 3rem;
+    }
+}
+
+/* ===== DARK MODE ENHANCEMENTS ===== */
+[data-theme="dark"] .profile-section,
+[data-theme="dark"] .sidebar-card,
+[data-theme="dark"] .review-card {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .section-header {
+    background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .detail-item:hover,
+[data-theme="dark"] .stat-item:hover,
+[data-theme="dark"] .contact-item:hover {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .applications-table,
+[data-theme="dark"] .modern-table thead {
+    background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .modern-table tr:hover {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .text-muted {
+    color: var(--text-muted) !important;
+}
+
+/* Ensure text readability in both themes */
+.profile-name,
+.detail-content p,
+.sidebar-card h3,
+.stat-info strong,
+.contact-item span,
+.reviewer-info h4 {
+    color: var(--text-primary) !important;
+}
+
+.profile-role,
+.meta-item,
+.detail-content label,
+.stat-info span,
+.reviewer-info p {
+    color: var(--text-secondary) !important;
+}
+
+/* Print Styles */
+@media print {
+    .profile-actions-header,
+    .action-buttons,
+    .btn-modern {
+        display: none !important;
+    }
+    
+    .profile-section {
+        break-inside: avoid;
+        box-shadow: none !important;
+        border: 1px solid #ccc !important;
+    }
+    
+    .profile-header {
+        background: #f8f9fa !important;
+        color: #000 !important;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Profile Editing Functionality
+    const toggleEditBtn = document.getElementById('toggleEditProfile');
+    const editActions = document.getElementById('editProfileActions');
+    const profileReadView = document.getElementById('profileReadView');
+    const profileEditView = document.getElementById('profileEditView');
+    const profileLoading = document.getElementById('profileLoading');
+    const saveProfileBtn = document.getElementById('saveProfile');
+    const cancelEditBtn = document.getElementById('cancelEdit');
+    const profileEditForm = document.getElementById('profileEditForm');
+    const profileSection = document.querySelector('.profile-section');
+
+    let isEditing = false;
+
+    // Only initialize if the user is viewing their own profile
+    if (toggleEditBtn && {{ 'true' if current_user and user.id == current_user.id else 'false' }}) {
+
+        // Toggle edit mode
+        function toggleEditMode() {
+            isEditing = !isEditing;
+            
+            if (isEditing) {
+                // Enter edit mode
+                toggleEditBtn.style.display = 'none';
+                editActions.style.display = 'flex';
+                profileReadView.style.display = 'none';
+                profileEditView.style.display = 'block';
+                profileSection.classList.add('editing-mode');
+                
+                // Populate form fields with current data
+                document.getElementById('editName').value = document.getElementById('displayName').textContent;
+                document.getElementById('editEmail').value = document.getElementById('displayEmail').textContent.trim() || '';
+                document.getElementById('editSkills').value = document.getElementById('displaySkills').textContent.trim() || '';
+                document.getElementById('editLocation').value = document.getElementById('displayLocation').textContent;
+                
+                // Focus on first field
+                document.getElementById('editName').focus();
+            } else {
+                // Exit edit mode
+                toggleEditBtn.style.display = 'block';
+                editActions.style.display = 'none';
+                profileReadView.style.display = 'block';
+                profileEditView.style.display = 'none';
+                profileSection.classList.remove('editing-mode');
+                
+                // Clear any validation states
+                clearValidationStates();
+            }
+        }
+
+        // Clear validation states
+        function clearValidationStates() {
+            const formInputs = profileEditForm.querySelectorAll('.form-control');
+            formInputs.forEach(input => {
+                input.classList.remove('is-invalid', 'is-valid');
+            });
+        }
+
+        // Show loading state
+        function showLoading() {
+            profileReadView.style.display = 'none';
+            profileEditView.style.display = 'none';
+            profileLoading.style.display = 'block';
+            editActions.style.display = 'none';
+        }
+
+        // Hide loading state
+        function hideLoading() {
+            profileLoading.style.display = 'none';
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'profile-success';
+            successDiv.innerHTML = `<i class="fas fa-check-circle me-2"></i>${message}`;
+            
+            profileSection.querySelector('.section-content').insertBefore(successDiv, profileSection.querySelector('.profile-editing-content'));
+            
+            setTimeout(() => {
+                successDiv.remove();
+            }, 5000);
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'profile-error';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-circle me-2"></i>${message}`;
+            
+            profileSection.querySelector('.section-content').insertBefore(errorDiv, profileSection.querySelector('.profile-editing-content'));
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+
+        // Validate form
+        function validateForm() {
+            let isValid = true;
+            const inputs = profileEditForm.querySelectorAll('input[required]');
+            
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    input.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    input.classList.remove('is-invalid');
+                    input.classList.add('is-valid');
+                }
+            });
+            
+            return isValid;
+        }
+
+        // Save profile data
+        async function saveProfile() {
+            if (!validateForm()) {
+                showError('Please fill in all required fields.');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const formData = new FormData(profileEditForm);
+                
+                const response = await fetch('/update_jobseeker_profile', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Update display values
+                    document.getElementById('displayName').textContent = result.data.name;
+                    document.getElementById('displayEmail').textContent = result.data.email || 'Not provided';
+                    document.getElementById('displaySkills').textContent = result.data.skills || 'Not specified';
+                    document.getElementById('displayExperience').textContent = result.data.years_experience ? 
+                        `${result.data.years_experience} year${result.data.years_experience > 1 ? 's' : ''}` : 
+                        'Not specified';
+                    document.getElementById('displayGender').textContent = result.data.gender ? 
+                        result.data.gender.charAt(0).toUpperCase() + result.data.gender.slice(1) : 
+                        'Not specified';
+                    document.getElementById('displayLocation').textContent = result.data.location;
+
+                    // Update profile header and other sections
+                    document.querySelector('.profile-name').textContent = result.data.name;
+                    document.querySelector('.profile-meta .meta-item:nth-child(2)').innerHTML = 
+                        `<i class="fas fa-envelope"></i>${result.data.email || ''}`;
+                    
+                    // Update location in profile meta
+                    const locationMeta = document.querySelector('.profile-meta .meta-item:first-child');
+                    locationMeta.innerHTML = `<i class="fas fa-map-marker-alt"></i>${result.data.location}`;
+
+                    showSuccess(result.message);
+                    toggleEditMode();
+                } else {
+                    showError(result.message);
+                }
+            } catch (error) {
+                console.error('Error saving profile:', error);
+                showError('An error occurred while saving your profile. Please try again.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Event Listeners for profile editing
+        toggleEditBtn.addEventListener('click', toggleEditMode);
+        cancelEditBtn.addEventListener('click', toggleEditMode);
+        saveProfileBtn.addEventListener('click', saveProfile);
+
+        // Allow form submission with Enter key
+        profileEditForm.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && isEditing) {
+                e.preventDefault();
+                saveProfile();
+            }
+        });
+
+        // Real-time validation
+        profileEditForm.addEventListener('input', function(e) {
+            if (e.target.hasAttribute('required')) {
+                if (e.target.value.trim()) {
+                    e.target.classList.remove('is-invalid');
+                    e.target.classList.add('is-valid');
+                } else {
+                    e.target.classList.remove('is-valid');
+                }
+            }
+        });
+
+        // Add editing class to form controls when focused
+        profileEditForm.addEventListener('focusin', function(e) {
+            if (e.target.classList.contains('form-control')) {
+                e.target.classList.add('editing');
+            }
+        });
+
+        profileEditForm.addEventListener('focusout', function(e) {
+            if (e.target.classList.contains('form-control')) {
+                e.target.classList.remove('editing');
+            }
+        });
+    }
+
+    // Add smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+
+    // Add loading animation for tables
+    const tables = document.querySelectorAll('.modern-table');
+    tables.forEach((table, index) => {
+        table.style.animationDelay = `${index * 0.1}s`;
+        table.classList.add('fade-in-up');
+    });
+
+    // Add hover effects for interactive elements
+    const interactiveElements = document.querySelectorAll('.detail-item, .stat-item, .contact-item, .review-card');
+    interactiveElements.forEach(element => {
+        element.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        element.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+{% endblock %}
+{% endif %}

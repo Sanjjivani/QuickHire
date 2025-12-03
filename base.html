@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}QuickHire - Hire Smarter. Work Faster.{% endblock %}</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.js"></script>
+</head>
+
+<body data-theme="dark">
+    <!-- 🌓 FLOATING THEME TOGGLE BUTTON -->
+    <div class="theme-toggle-container">
+        <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Switch theme">
+            <span class="theme-icon">
+                <i class="fas fa-moon" id="theme-icon"></i>
+            </span>
+            <span class="theme-text">
+                <span id="theme-text">Dark</span> Mode
+            </span>
+        </button>
+    </div>
+
+
+    <!-- 🌟 Modern Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-glass fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <div class="brand-logo">
+                    <i class="fas fa-bolt me-2"></i>
+                    <span class="brand-text">QuickHire</span>
+                </div>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'jobs' %}active{% endif %}" href="{{ url_for('jobs') }}">
+                            <i class="fas fa-briefcase me-1"></i>Jobs
+                        </a>
+                    </li>
+                    
+                    <!-- Maps Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if request.endpoint in ['map_jobs', 'map_seekers'] %}active{% endif %}" 
+                           href="#" 
+                           id="mapDropdown" 
+                           role="button" 
+                           data-bs-toggle="dropdown">
+                            <i class="fas fa-map-marked-alt me-1"></i>Maps
+                        </a>
+                        <ul class="dropdown-menu">
+                            {% if session.user_role == 'jobseeker' %}
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('map_jobs') }}">
+                                    <i class="fas fa-briefcase me-2"></i>Find Jobs on Map
+                                </a>
+                            </li>
+                            {% elif session.user_role == 'employer' %}
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('map_seekers') }}">
+                                    <i class="fas fa-users me-2"></i>Find Seekers on Map
+                                </a>
+                            </li>
+                            {% else %}
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('login') }}">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login to View Maps
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    
+                    {% if session.user_id %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Enhanced Chat Link - Role-based -->
+                    {% if session.user_id %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint in ['chat_home', 'employer_chat', 'chat_room'] %}active{% endif %}" 
+                           href="{% if session.user_role == 'employer' %}{{ url_for('employer_chat') }}{% else %}{{ url_for('chat_home') }}{% endif %}">
+                            <i class="fas fa-comments me-1"></i>Messages
+                            {% if session.user_role == 'jobseeker' %}
+                                <!-- Show notification badge for job seekers if they have new hires -->
+                                <span class="badge bg-primary new-hires-badge" id="newHiresBadge" style="display: none;"></span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'admin_login' %}active{% endif %}" href="{{ url_for('admin_login') }}">
+                            <i class="fas fa-user-shield me-1"></i>Admin Panel
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    {% if session.user_id %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i>
+                            {% if session.user_role == 'jobseeker' or session.user_role == 'employer' %}
+                                {{ session.get('user_name', 'User') }}
+                            {% else %}
+                                User
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('profile', user_id=session.user_id) }}">
+                                    <i class="fas fa-user me-2"></i>Profile
+                                </a>
+                            </li>
+                            {% if session.user_role == 'employer' %}
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('direct_hire') }}">
+                                    <i class="fas fa-users me-2"></i>Direct Hire
+                                </a>
+                            </li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('logout') }}">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link btn-login" href="{{ url_for('login') }}">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link btn-register" href="{{ url_for('register') }}">
+                            <i class="fas fa-user-plus me-1"></i>Register
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 🌟 Modern Footer -->
+    <footer class="footer-modern">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="brand-logo">
+                        <i class="fas fa-bolt me-2"></i>
+                        <span class="brand-text">QuickHire</span>
+                    </div>
+                    <p class="footer-description">Where amazing talent meets great opportunities. Connect instantly with skilled local workers or find your dream job in seconds.</p>
+                </div>
+                <div class="col-lg-2">
+                    <h5>Quick Links</h5>
+                    <ul class="footer-links">
+                        <li><a href="{{ url_for('index') }}">Home</a></li>
+                        <li><a href="{{ url_for('jobs') }}">Jobs</a></li>
+                        <li><a href="{{ url_for('register') }}">Register</a></li>
+                        {% if session.user_id %}
+                            {% if session.user_role == 'jobseeker' %}
+                            <li><a href="{{ url_for('map_jobs') }}">Find Jobs on Map</a></li>
+                            {% elif session.user_role == 'employer' %}
+                            <li><a href="{{ url_for('map_seekers') }}" class="btn-modern btn-primary-modern">
+    <i class="fas fa-map-marked-alt me-2"></i>Find Seekers on Map
+</a></li>
+                            {% endif %}
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="col-lg-3">
+                    <h5>Resources</h5>
+                    <ul class="footer-links">
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3">
+                    <h5>Connect</h5>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 QuickHire. All rights reserved. Built with <i class="fas fa-heart text-danger"></i> for better hiring experiences.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+        <!-- Enhanced Theme Management Script -->
+    <script>
+    // Enhanced Theme Management
+    class ThemeManager {
+        constructor() {
+            this.theme = localStorage.getItem('quickhire-theme') || 'dark';
+            this.init();
+        }
+
+        init() {
+            this.applyTheme(this.theme);
+            this.updateThemeIcon();
+        }
+
+        applyTheme(theme) {
+            document.body.setAttribute('data-theme', theme);
+            localStorage.setItem('quickhire-theme', theme);
+            this.theme = theme;
+            this.updateThemeIcon();
+            
+            // Dispatch custom event for components that need to react to theme changes
+            window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme } }));
+        }
+
+        toggleTheme() {
+            const newTheme = this.theme === 'dark' ? 'light' : 'dark';
+            this.applyTheme(newTheme);
+            
+            // Add animation class for smooth transition
+            document.body.classList.add('theme-transitioning');
+            setTimeout(() => {
+                document.body.classList.remove('theme-transitioning');
+            }, 300);
+        }
+
+        updateThemeIcon() {
+            const themeIcon = document.getElementById('theme-icon');
+            const themeText = document.getElementById('theme-text');
+            
+            if (themeIcon && themeText) {
+                if (this.theme === 'light') {
+                    themeIcon.className = 'fas fa-sun';
+                    themeText.textContent = 'Light';
+                } else {
+                    themeIcon.className = 'fas fa-moon';
+                    themeText.textContent = 'Dark';
+                }
+            }
+        }
+    }
+
+    // Initialize theme manager
+    let themeManager;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        themeManager = new ThemeManager();
+        
+        // Global theme toggle function
+        window.toggleTheme = function() {
+            themeManager.toggleTheme();
+        };
+        
+        // Listen for theme changes to update components
+        window.addEventListener('themeChanged', function(event) {
+            console.log('Theme changed to:', event.detail.theme);
+        });
+
+        // Add smooth loading animations
+        document.querySelectorAll('.animate-on-scroll').forEach(element => {
+            element.classList.add('animate__animated', 'animate__fadeInUp');
+        });
+
+        // Check for new hires for job seekers
+        {% if session.user_id and session.user_role == 'jobseeker' %}
+        checkNewHires();
+        setInterval(checkNewHires, 30000);
+        {% endif %}
+    });
+
+    // Function to check for new hires (for job seekers)
+    async function checkNewHires() {
+        try {
+            const response = await fetch('/check_new_hires');
+            const data = await response.json();
+            
+            const badge = document.getElementById('newHiresBadge');
+            if (badge && data.new_hires > 0) {
+                badge.textContent = data.new_hires;
+                badge.style.display = 'inline-block';
+                badge.classList.add('pulse-animation');
+            } else if (badge) {
+                badge.style.display = 'none';
+                badge.classList.remove('pulse-animation');
+            }
+        } catch (error) {
+            console.error('Error checking new hires:', error);
+        }
+    }
+    </script>
+
+    
+
+
+
+    <style>
+    /* Pulse animation for notification badges */
+    .pulse-animation {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(67, 97, 238, 0.7);
+        }
+        70% {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 10px rgba(67, 97, 238, 0);
+        }
+        100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(67, 97, 238, 0);
+        }
+    }
+    
+    .new-hires-badge {
+        position: relative;
+        top: -2px;
+        font-size: 0.7rem;
+        padding: 0.25rem 0.4rem;
+    }
+
+    /* Map dropdown specific styles */
+    .nav-item.dropdown .dropdown-menu {
+        border: none;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(20px);
+        background: rgba(var(--card-bg-rgb), 0.9);
+    }
+
+    .nav-item.dropdown .dropdown-item {
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .nav-item.dropdown .dropdown-item:hover {
+        background: rgba(var(--primary-rgb), 0.1);
+        transform: translateX(5px);
+    }
+
+
+        
+/* ===== GLOBAL COLOR FIXES ===== */
+
+/* Ensure text visibility in both light and dark themes */
+[data-theme="light"] {
+    --text-primary: #2d3748;
+    --text-secondary: #4a5568;
+    --text-muted: #718096;
+    --bg-card: #ffffff;
+    --bg-secondary: #f7fafc;
+    --border-color: #e2e8f0;
+}
+
+[data-theme="dark"] {
+    --text-primary: #f7fafc;
+    --text-secondary: #e2e8f0;
+    --text-muted: #a0aec0;
+    --bg-card: #2d3748;
+    --bg-secondary: #1a202c;
+    --border-color: #4a5568;
+}
+
+/* Fix for review form and all card content */
+.card-modern,
+.card {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+}
+
+.card-body {
+    color: var(--text-primary) !important;
+}
+
+/* Fix text colors in all elements */
+.text-muted-dark,
+.text-muted,
+.form-text,
+.seeker-info,
+.bg-light {
+    color: var(--text-primary) !important;
+}
+
+.bg-light {
+    background: var(--bg-secondary) !important;
+}
+
+/* Form controls visibility */
+.form-control,
+.form-select {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25) !important;
+}
+
+.form-label {
+    color: var(--text-primary) !important;
+    font-weight: 600;
+}
+
+/* Table fixes */
+.table-modern {
+    color: var(--text-primary) !important;
+}
+
+.table-modern th {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.table-modern td {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Badge fixes */
+.badge {
+    color: white !important;
+}
+
+/* Alert fixes */
+.alert-modern {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+/* Specific fix for review form */
+.seeker-info {
+    background: var(--bg-secondary) !important;
+    border-left: 4px solid var(--primary) !important;
+    color: var(--text-primary) !important;
+}
+
+.seeker-info h5,
+.seeker-info p {
+    color: var(--text-primary) !important;
+}
+
+/* Button visibility */
+.btn-modern {
+    color: white !important;
+}
+
+.btn-outline-modern {
+    color: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+
+.btn-outline-modern:hover {
+    color: white !important;
+    background: var(--primary) !important;
+}
+
+/* Dropdown fixes */
+.dropdown-menu {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.dropdown-item {
+    color: var(--text-primary) !important;
+}
+
+.dropdown-item:hover {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Navbar fixes */
+.navbar-glass {
+    background: rgba(var(--bg-card-rgb), 0.95) !important;
+    backdrop-filter: blur(20px) !important;
+}
+
+.nav-link {
+    color: var(--text-primary) !important;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: var(--primary) !important;
+}
+
+/* Footer fixes */
+.footer-modern {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+}
+
+.footer-links a {
+    color: var(--text-secondary) !important;
+}
+
+.footer-links a:hover {
+    color: var(--primary) !important;
+}
+
+/* Modal fixes */
+.modal-content {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+}
+
+.modal-header,
+.modal-footer {
+    border-color: var(--border-color) !important;
+}
+
+/* Chat message fixes */
+.message-received {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+/* Map container fixes */
+.map-container {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Statistics cards */
+.stat-card {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+}
+
+.stat-number {
+    color: var(--text-primary) !important;
+}
+
+.stat-label {
+    color: var(--text-secondary) !important;
+}
+
+/* Ensure all text in cards is visible */
+.card-modern h1,
+.card-modern h2,
+.card-modern h3,
+.card-modern h4,
+.card-modern h5,
+.card-modern h6,
+.card-modern p,
+.card-modern span,
+.card-modern div {
+    color: var(--text-primary) !important;
+}
+
+/* Specific fix for the review form text */
+.review-form-content,
+.job-details-info,
+.seeker-details {
+    color: var(--text-primary) !important;
+}
+
+/* Fix for form placeholders */
+.form-control::placeholder {
+    color: var(--text-muted) !important;
+    opacity: 1;
+}
+
+/* Fix for disabled form elements */
+.form-control:disabled {
+    background: var(--bg-secondary) !important;
+    color: var(--text-muted) !important;
+}
+
+/* Fix for input groups */
+.input-group-text {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Fix for list groups */
+.list-group-item {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.list-group-item.active {
+    background: var(--primary) !important;
+    color: white !important;
+    border-color: var(--primary) !important;
+}
+
+/* Fix for pagination */
+.page-link {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.page-link:hover {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+}
+
+.page-item.active .page-link {
+    background: var(--primary) !important;
+    color: white !important;
+    border-color: var(--primary) !important;
+}
+
+/* Custom scrollbar for better visibility */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+
+
+
+
+    </style>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

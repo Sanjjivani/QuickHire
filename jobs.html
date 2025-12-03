@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}Job Listings - QuickHire{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <!-- Page Header -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="text-center">
+                <h1 class="display-5 fw-bold mb-3 text-gradient">Find Your Dream Job</h1>
+                <p class="lead text-muted">Discover amazing opportunities that match your skills</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Section -->
+    <div class="card-modern mb-5">
+        <div class="card-body p-4">
+            <h4 class="mb-4 text-gradient"><i class="fas fa-search me-2"></i>Find Your Perfect Job</h4>
+            <form method="GET" action="{{ url_for('search_jobs') }}" class="row g-3 form-modern">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Job Title or Description</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" name="q" placeholder="e.g., Cook, Driver, Cleaner..." value="{{ request.args.get('q', '') }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Location</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                        <input type="text" class="form-control" name="location" placeholder="e.g., Aurangabad" value="{{ request.args.get('location', '') }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Skill Required</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-tools"></i></span>
+                        <select class="form-control" name="skill">
+                            <option value="">All Skills</option>
+                            <option value="Cooking" {% if request.args.get('skill') == 'Cooking' %}selected{% endif %}>Cooking</option>
+                            <option value="Washing" {% if request.args.get('skill') == 'Washing' %}selected{% endif %}>Washing</option>
+                            <option value="Babysitting" {% if request.args.get('skill') == 'Babysitting' %}selected{% endif %}>Babysitting</option>
+                            <option value="Cleaning" {% if request.args.get('skill') == 'Cleaning' %}selected{% endif %}>Cleaning</option>
+                            <option value="Driving" {% if request.args.get('skill') == 'Driving' %}selected{% endif %}>Driving</option>
+                            <option value="Other" {% if request.args.get('skill') == 'Other' %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Min Salary (₹)</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-rupee-sign"></i></span>
+                        <input type="number" class="form-control" name="min_salary" placeholder="0" value="{{ request.args.get('min_salary', '') }}">
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="d-flex gap-2 flex-wrap align-items-center">
+                        <button type="submit" class="btn-modern btn-primary-modern">
+                            <i class="fas fa-search me-2"></i>Search Jobs
+                        </button>
+                        <a href="{{ url_for('jobs') }}" class="btn-modern btn-outline-modern">
+                            <i class="fas fa-refresh me-2"></i>Clear Filters
+                        </a>
+                        <span class="ms-auto text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Found <strong>{{ jobs|length }}</strong> job{{ 's' if jobs|length != 1 }}
+                        </span>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category == 'error' and 'danger' or 'success' }} alert-modern mb-4" role="alert">
+                    <i class="fas fa-{{ category == 'error' and 'exclamation-triangle' or 'check-circle' }} me-2"></i>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <!-- Job Listings -->
+    <div class="row g-4">
+        {% if jobs %}
+            {% for job in jobs %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="job-card-modern animate-on-scroll">
+                        <div class="job-card-header">
+                            <div class="flex-grow-1">
+                                <h5 class="job-card-title">{{ job.title }}</h5>
+                                <p class="job-card-company mb-2">
+                                    <i class="fas fa-building me-1 text-muted"></i>
+                                    {{ job.employer.employer_name }}
+                                </p>
+                            </div>
+                            <span class="job-card-salary">₹{{ "%.0f"|format(job.pay) }}</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <p class="text-muted mb-2">{{ job.description | truncate(120) }}</p>
+                        </div>
+                        
+                        <div class="job-card-meta mb-3">
+                            <div class="job-card-meta-item">
+                                <i class="fas fa-map-marker-alt text-primary"></i>
+                                {{ job.location }}
+                            </div>
+                            <div class="job-card-meta-item">
+                                <i class="fas fa-tools text-primary"></i>
+                                {{ job.required_skills }}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ job.posted_at.strftime('%b %d, %Y') }}
+                            </small>
+                            {% if session.user_id and session.user_role == 'jobseeker' %}
+                                {% set has_applied = false %}
+                                {% if current_user and current_user.applications %}
+                                    {% for application in current_user.applications %}
+                                        {% if application.job_id == job.id %}
+                                            {% set has_applied = true %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                                {% if has_applied %}
+                                    <span class="badge-modern badge-success-modern">
+                                        <i class="fas fa-check me-1"></i>Applied
+                                    </span>
+                                {% else %}
+                                    <a href="{{ url_for('apply_job', job_id=job.id) }}" class="btn-modern btn-primary-modern btn-sm">
+                                        <i class="fas fa-paper-plane me-1"></i>Apply Now
+                                    </a>
+                                {% endif %}
+                            {% elif not session.user_id %}
+                                <a href="{{ url_for('login') }}" class="btn-modern btn-outline-modern btn-sm">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Login to Apply
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="card-modern text-center py-5">
+                    <div class="card-body">
+                        <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted mb-3">No Jobs Found</h4>
+                        <p class="text-muted mb-4">
+                            {% if request.args.get('q') or request.args.get('location') or request.args.get('skill') %}
+                                Try adjusting your search criteria
+                            {% else %}
+                                No jobs are currently available
+                            {% endif %}
+                        </p>
+                        {% if session.user_id and session.user_role == 'employer' %}
+                            <a href="{{ url_for('post_job') }}" class="btn-modern btn-primary-modern">
+                                <i class="fas fa-plus me-2"></i>Post a Job
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const animateElements = document.querySelectorAll('.animate-on-scroll');
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate__animated', 'animate__fadeInUp');
+            }
+        });
+    }, { threshold: 0.1 });
+    
+    animateElements.forEach(element => {
+        observer.observe(element);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,15 @@
+flask
+flask-sqlalchemy
+flask-migrate
+flask-bcrypt
+flask-login
+flask-wtf
+wtforms
+email-validator
+pymysql
+mysql-connector-python
+python-dotenv
+flask-socketio
+python-socketio
+python-engineio
+eventlet

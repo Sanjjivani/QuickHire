@@ -1,0 +1,437 @@
+{% extends "base.html" %}
+{% block title %}Hired Job Seekers - QuickHire{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 fw-bold text-gradient mb-2">
+                        <i class="fas fa-user-check me-2"></i>Hired Job Seekers
+                    </h1>
+                    <p class="text-muted-dark mb-0">View all job seekers you've directly hired</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('direct_hire') }}" class="btn-modern btn-primary-modern">
+                        <i class="fas fa-user-plus me-2"></i>Hire More
+                    </a>
+                    <a href="{{ url_for('dashboard') }}" class="btn-modern btn-outline-modern">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category == 'error' and 'danger' or 'success' }} alert-modern mb-4" role="alert">
+                    <i class="fas fa-{{ category == 'error' and 'exclamation-triangle' or 'check-circle' }} me-2"></i>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Hired Seekers List -->
+    <div class="card-modern">
+        <div class="card-header-modern">
+            <h4 class="mb-0 text-white">
+                <i class="fas fa-users me-2"></i>Directly Hired Job Seekers
+                <span class="badge bg-white text-primary ms-2">{{ direct_hires|length }}</span>
+            </h4>
+        </div>
+        <div class="card-body">
+            {% if direct_hires %}
+                <div class="table-responsive">
+                    <table class="table table-modern">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">Job Seeker</th>
+                                <th>Skills</th>
+                                <th>Experience</th>
+                                <th>Location</th>
+                                <th>Hired Date</th>
+                                <th>Status</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for hire in direct_hires %}
+                                <tr class="hired-row">
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="seeker-avatar me-3">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            <div>
+                                                <a href="{{ url_for('profile', user_id=hire.jobseeker.user.id) }}" 
+                                                   class="seeker-name text-decoration-none">
+                                                    {{ hire.jobseeker.jobseeker_name }}
+                                                </a>
+                                                <br>
+                                                <small class="seeker-contact">
+                                                    {% if hire.jobseeker.email %}
+                                                        <i class="fas fa-envelope me-1"></i>{{ hire.jobseeker.email }}
+                                                    {% else %}
+                                                        <i class="fas fa-phone me-1"></i>{{ hire.jobseeker.user.phone }}
+                                                    {% endif %}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="seeker-skills">
+                                            {{ hire.jobseeker.skills or 'Not specified' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="seeker-experience">
+                                            {{ hire.jobseeker.years_experience or '0' }} year{{ 's' if hire.jobseeker.years_experience != 1 }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="seeker-location">
+                                            <i class="fas fa-map-marker-alt me-1"></i>
+                                            {{ hire.jobseeker.location }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="hire-date">
+                                            {{ hire.hired_at.strftime('%Y-%m-%d') }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge status-badge-{{ hire.status }}">
+                                            {% if hire.status == 'completed' %}
+                                                <i class="fas fa-check-circle me-1"></i>Completed
+                                            {% elif hire.status == 'terminated' %}
+                                                <i class="fas fa-times-circle me-1"></i>Terminated
+                                            {% else %}
+                                                <i class="fas fa-user-check me-1"></i>Active
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <div class="d-flex gap-2 justify-content-end">
+                                            <a href="{{ url_for('start_chat', jobseeker_id=hire.jobseeker.id) }}" 
+                                               class="btn-modern btn-primary-modern btn-sm"
+                                               data-bs-toggle="tooltip" title="Chat with job seeker">
+                                                <i class="fas fa-comment"></i>
+                                            </a>
+                                            <a href="{{ url_for('profile', user_id=hire.jobseeker.user.id) }}" 
+                                               class="btn-modern btn-outline-modern btn-sm"
+                                               data-bs-toggle="tooltip" title="View profile">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <!-- Review Button -->
+                                            {% set existing_review = [] %}
+                                            {% for review in hire.jobseeker.user.reviews_received %}
+                                                {% if review.reviewer_id == current_user.id %}
+                                                    {% set existing_review = existing_review.append(review) %}
+                                                {% endif %}
+                                            {% endfor %}
+                                            
+                                            {% if existing_review %}
+                                                <span class="badge bg-success btn-sm" data-bs-toggle="tooltip" title="Already reviewed">
+                                                    <i class="fas fa-star"></i>
+                                                </span>
+                                            {% else %}
+                                                <button class="btn-modern btn-warning-modern btn-sm" 
+                                                        onclick="openReviewModal({{ hire.jobseeker.id }}, '{{ hire.jobseeker.jobseeker_name }}')"
+                                                        data-bs-toggle="tooltip" title="Leave review">
+                                                    <i class="fas fa-star"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <!-- Empty State -->
+                <div class="text-center py-5">
+                    <div class="empty-state">
+                        <i class="fas fa-user-check fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted-dark mb-3">No Hired Job Seekers Yet</h4>
+                        <p class="text-muted-dark mb-4">You haven't directly hired any job seekers yet. Start hiring to build your team!</p>
+                        <div class="d-flex gap-3 justify-content-center">
+                            <a href="{{ url_for('direct_hire') }}" class="btn-modern btn-primary-modern">
+                                <i class="fas fa-user-plus me-2"></i>Hire Job Seekers
+                            </a>
+                            <a href="{{ url_for('map_seekers') }}" class="btn-modern btn-outline-modern">
+                                <i class="fas fa-map-marked-alt me-2"></i>Find on Map
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reviewModalLabel">Leave Review for <span id="seekerName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="reviewForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="rating" class="form-label">Rating</label>
+                        <select class="form-select" id="rating" name="rating" required>
+                            <option value="">Select Rating</option>
+                            <option value="5">⭐⭐⭐⭐⭐ (5) - Excellent</option>
+                            <option value="4">⭐⭐⭐⭐ (4) - Very Good</option>
+                            <option value="3">⭐⭐⭐ (3) - Good</option>
+                            <option value="2">⭐⭐ (2) - Fair</option>
+                            <option value="1">⭐ (1) - Poor</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Review Comment (Optional)</label>
+                        <textarea class="form-control" id="comment" name="comment" rows="3" 
+                                  placeholder="Share your experience working with this job seeker..." 
+                                  maxlength="500"></textarea>
+                        <div class="form-text">Maximum 500 characters</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Review</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Hired Seekers Page Styles */
+.seeker-avatar {
+    width: 40px;
+    height: 40px;
+    background: var(--gradient-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+}
+
+.seeker-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    transition: color var(--transition-fast);
+}
+
+.seeker-name:hover {
+    color: var(--primary);
+}
+
+.seeker-contact {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.seeker-skills {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.seeker-experience {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.seeker-location {
+    color: var(--text-secondary);
+}
+
+.hire-date {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.hired-row {
+    transition: all var(--transition-fast);
+    border-color: var(--border-color) !important;
+}
+
+.hired-row:hover {
+    background: rgba(67, 97, 238, 0.05) !important;
+    transform: scale(1.01);
+}
+
+/* Status Badges */
+.status-badge-active {
+    background: rgba(40, 167, 69, 0.15);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.status-badge-completed {
+    background: rgba(108, 117, 125, 0.15);
+    color: #6c757d;
+    border: 1px solid rgba(108, 117, 125, 0.3);
+}
+
+.status-badge-terminated {
+    background: rgba(220, 53, 69, 0.15);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.btn-warning-modern {
+    background: linear-gradient(135deg, #ffc107, #fd7e14);
+    color: white;
+    border: none;
+}
+
+.btn-warning-modern:hover {
+    background: linear-gradient(135deg, #e0a800, #e36407);
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Empty State */
+.empty-state h4,
+.empty-state p {
+    color: var(--text-secondary) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hired-row td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .seeker-avatar {
+        width: 35px;
+        height: 35px;
+        font-size: 0.875rem;
+    }
+    
+    .d-flex.gap-2 {
+        gap: 0.5rem !important;
+    }
+    
+    .btn-modern.btn-sm {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.8rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+}
+
+/* Dark Mode Adjustments */
+[data-theme="dark"] .seeker-skills,
+[data-theme="dark"] .seeker-experience,
+[data-theme="dark"] .hire-date {
+    color: var(--gray-300);
+}
+
+[data-theme="dark"] .seeker-contact,
+[data-theme="dark"] .seeker-location {
+    color: var(--gray-400);
+}
+
+[data-theme="dark"] .table-modern tbody td {
+    color: var(--gray-300);
+    border-color: var(--gray-700);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+    
+    // Add animation to hired rows
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+    
+    // Observe all hired rows
+    document.querySelectorAll('.hired-row').forEach(row => {
+        row.style.opacity = '0';
+        row.style.transform = 'translateY(20px)';
+        row.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(row);
+    });
+});
+
+// Review Modal Functions
+function openReviewModal(seekerId, seekerName) {
+    document.getElementById('seekerName').textContent = seekerName;
+    
+    // Set form action
+    const form = document.getElementById('reviewForm');
+    form.action = `/submit_direct_review/${seekerId}`;
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('reviewModal'));
+    modal.show();
+}
+
+// Handle review form submission
+document.getElementById('reviewForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const seekerId = this.action.split('/').pop();
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('reviewModal'));
+            modal.hide();
+            
+            // Show success message
+            Swal.fire({
+                title: 'Success!',
+                text: data.message,
+                icon: 'success',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire('Error!', data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire('Error!', 'An error occurred while submitting the review.', 'error');
+    });
+});
+</script>
+{% endblock %}

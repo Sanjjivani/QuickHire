@@ -1,0 +1,540 @@
+{% extends "base.html" %}
+{% block title %}Applicants - QuickHire{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 fw-bold text-gradient mb-2">
+                        <i class="fas fa-users me-2"></i>Job Applicants
+                    </h1>
+                    <p class="text-muted-dark mb-0">Manage and review applications for your job postings</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-primary fs-6">
+                        <i class="fas fa-user-check me-1"></i>{{ total_hired }} Hired
+                    </span>
+                    <span class="badge bg-warning fs-6">
+                        <i class="fas fa-user-clock me-1"></i>{{ total_pending }} Pending
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card-modern stat-card">
+                <div class="card-body text-center">
+                    <div class="stat-icon bg-warning mx-auto mb-3">
+                        <i class="fas fa-user-clock"></i>
+                    </div>
+                    <h3 class="stat-number text-warning">{{ total_pending }}</h3>
+                    <p class="stat-label">Pending Applications</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-modern stat-card">
+                <div class="card-body text-center">
+                    <div class="stat-icon bg-success mx-auto mb-3">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <h3 class="stat-number text-success">{{ total_hired }}</h3>
+                    <p class="stat-label">Hired Candidates</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-modern stat-card">
+                <div class="card-body text-center">
+                    <div class="stat-icon bg-danger mx-auto mb-3">
+                        <i class="fas fa-user-times"></i>
+                    </div>
+                    <h3 class="stat-number text-danger">{{ total_rejected }}</h3>
+                    <p class="stat-label">Rejected Applications</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category == 'error' and 'danger' or 'success' }} alert-modern mb-4" role="alert">
+                    <i class="fas fa-{{ category == 'error' and 'exclamation-triangle' or 'check-circle' }} me-2"></i>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Applicants Table -->
+    <div class="card-modern">
+        <div class="card-header-modern">
+            <h4 class="mb-0 text-white">
+                <i class="fas fa-list me-2"></i>Applicant Details
+            </h4>
+        </div>
+        <div class="card-body">
+            {% if jobs %}
+                {% for job in jobs %}
+                    {% if job.applications %}
+                        <div class="job-section mb-5">
+                            <!-- Job Header -->
+                            <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-section rounded">
+                                <div>
+                                    <h5 class="text-primary mb-1">
+                                        <i class="fas fa-briefcase me-2"></i>{{ job.title }}
+                                    </h5>
+                                    <p class="text-muted-dark mb-0">
+                                        <i class="fas fa-map-marker-alt me-1"></i>{{ job.location }} • 
+                                        <i class="fas fa-rupee-sign me-1"></i>₹{{ "%.0f"|format(job.pay) }} • 
+                                        <i class="fas fa-tools me-1"></i>{{ job.required_skills }}
+                                    </p>
+                                </div>
+                                <span class="badge bg-primary">
+                                    {{ job.applications|length }} applicant{{ 's' if job.applications|length != 1 }}
+                                </span>
+                            </div>
+
+                            <!-- Applicants Table -->
+                            <div class="table-responsive">
+                                <table class="table table-modern">
+                                    <thead>
+                                        <tr>
+                                            <th class="applicant-header">Name</th>
+                                            <th class="applicant-header">Skills</th>
+                                            <th class="applicant-header">Experience</th>
+                                            <th class="applicant-header">Status</th>
+                                            <th class="applicant-header">Applied Date</th>
+                                            <th class="applicant-header">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for application in job.applications %}
+                                            <tr class="applicant-row">
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="applicant-avatar me-3">
+                                                            <i class="fas fa-user"></i>
+                                                        </div>
+                                                        <div>
+                                                            <a href="{{ url_for('profile', user_id=application.jobseeker.user.id) }}" 
+                                                               class="applicant-name text-decoration-none">
+                                                                {{ application.jobseeker.jobseeker_name }}
+                                                            </a>
+                                                            <br>
+                                                            <small class="applicant-location">
+                                                                <i class="fas fa-map-marker-alt me-1"></i>
+                                                                {{ application.jobseeker.location }}
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span class="applicant-skills">
+                                                        {{ application.jobseeker.skills or 'Not specified' }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="applicant-experience">
+                                                        {{ application.jobseeker.years_experience or '0' }} year{{ 's' if application.jobseeker.years_experience != 1 }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge status-badge-{{ application.status }}">
+                                                        {% if application.status == 'hired' %}
+                                                            <i class="fas fa-check me-1"></i>Hired
+                                                        {% elif application.status == 'rejected' %}
+                                                            <i class="fas fa-times me-1"></i>Rejected
+                                                        {% else %}
+                                                            <i class="fas fa-clock me-1"></i>Pending
+                                                        {% endif %}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="applicant-date">
+                                                        {{ application.applied_at.strftime('%Y-%m-%d') }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex gap-2 flex-wrap">
+                                                        {% if application.status == 'pending' %}
+                                                            <form action="{{ url_for('hire_application', application_id=application.id) }}" method="POST">
+                                                                <button type="submit" class="btn-modern btn-success-modern btn-sm">
+                                                                    <i class="fas fa-check me-1"></i>Hire
+                                                                </button>
+                                                            </form>
+                                                            <form action="{{ url_for('reject_application', application_id=application.id) }}" method="POST">
+                                                                <button type="submit" class="btn-modern btn-danger-modern btn-sm">
+                                                                    <i class="fas fa-times me-1"></i>Reject
+                                                                </button>
+                                                            </form>
+                                                        {% elif application.status == 'hired' %}
+                                                            <!-- Check if review already exists for this job seeker and job -->
+                                                            {% set existing_review = namespace(found=false) %}
+                                                            {% for review in job.reviews %}
+                                                                {% if review.reviewer_id == current_user.id and review.reviewee_id == application.jobseeker.user.id %}
+                                                                    {% set existing_review.found = true %}
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                            
+                                                            {% if existing_review.found %}
+                                                                <span class="badge bg-success">
+                                                                    <i class="fas fa-star me-1"></i>Reviewed
+                                                                </span>
+                                                            {% else %}
+                                                                <a href="{{ url_for('review_seeker', application_id=application.id) }}" 
+                                                                   class="btn-modern btn-primary-modern btn-sm">
+                                                                    <i class="fas fa-star me-1"></i>Leave Review
+                                                                </a>
+                                                            {% endif %}
+                                                        {% endif %}
+                                                        
+                                                        <!-- Chat Button -->
+                                                        <a href="{{ url_for('start_chat', jobseeker_id=application.jobseeker.id) }}" 
+                                                           class="btn-modern btn-outline-modern btn-sm"
+                                                           data-bs-toggle="tooltip" title="Chat with applicant">
+                                                            <i class="fas fa-comment"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <!-- Empty State -->
+                <div class="text-center py-5">
+                    <div class="empty-state">
+                        <i class="fas fa-users fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted-dark mb-3">No Applicants Yet</h4>
+                        <p class="text-muted-dark mb-4">When job seekers apply to your jobs, they will appear here.</p>
+                        <div class="d-flex gap-3 justify-content-center">
+                            <a href="{{ url_for('post_job') }}" class="btn-modern btn-primary-modern">
+                                <i class="fas fa-plus me-2"></i>Post a Job
+                            </a>
+                            <a href="{{ url_for('jobs') }}" class="btn-modern btn-outline-modern">
+                                <i class="fas fa-search me-2"></i>Browse Jobs
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* ===== APPLICANTS PAGE SPECIFIC STYLES ===== */
+
+/* Text Colors for Dark/Light Mode */
+.applicant-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    transition: color var(--transition-fast);
+}
+
+.applicant-name:hover {
+    color: var(--primary);
+}
+
+.applicant-location {
+    color: var(--text-secondary);
+}
+
+.applicant-skills {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.applicant-experience {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.applicant-date {
+    color: var(--text-secondary);
+}
+
+.applicant-header {
+    color: var(--text-primary) !important;
+    font-weight: 600;
+    background: var(--bg-secondary) !important;
+}
+
+/* Applicant Row Styling */
+.applicant-row {
+    transition: all var(--transition-fast);
+    border-color: var(--border-color) !important;
+}
+
+.applicant-row:hover {
+    background: rgba(67, 97, 238, 0.05) !important;
+    transform: scale(1.01);
+}
+
+/* Applicant Avatar */
+.applicant-avatar {
+    width: 40px;
+    height: 40px;
+    background: var(--gradient-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+}
+
+/* Status Badges */
+.status-badge-pending {
+    background: rgba(255, 193, 7, 0.15);
+    color: #ffc107;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.status-badge-hired {
+    background: rgba(40, 167, 69, 0.15);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.status-badge-rejected {
+    background: rgba(220, 53, 69, 0.15);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+/* Button Styles */
+.btn-success-modern {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+}
+
+.btn-success-modern:hover {
+    background: linear-gradient(135deg, #218838, #1e9e8a);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.btn-danger-modern {
+    background: linear-gradient(135deg, #dc3545, #e83e8c);
+    color: white;
+    border: none;
+}
+
+.btn-danger-modern:hover {
+    background: linear-gradient(135deg, #c82333, #d91a7a);
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Job Section Styling */
+.job-section {
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 2rem;
+}
+
+.job-section:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+/* Section Background */
+.bg-section {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+}
+
+/* Table Header Fix */
+.table-modern thead th {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-bottom: 2px solid var(--border-color);
+}
+
+/* Empty State Text */
+.empty-state h4,
+.empty-state p {
+    color: var(--text-secondary) !important;
+}
+
+/* Badge Text Colors */
+.badge {
+    color: white !important;
+}
+
+/* Form Button Alignment */
+form {
+    margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .applicant-row td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .applicant-avatar {
+        width: 35px;
+        height: 35px;
+        font-size: 0.875rem;
+    }
+    
+    .d-flex.gap-2 {
+        gap: 0.5rem !important;
+    }
+    
+    .btn-modern.btn-sm {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .job-section .d-flex {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .applicant-name {
+        font-size: 0.9rem;
+    }
+}
+
+/* Dark Mode Specific Enhancements */
+[data-theme="dark"] .applicant-skills,
+[data-theme="dark"] .applicant-experience,
+[data-theme="dark"] .applicant-date {
+    color: var(--gray-300);
+}
+
+[data-theme="dark"] .applicant-location {
+    color: var(--gray-400);
+}
+
+[data-theme="dark"] .table-modern tbody td {
+    color: var(--gray-300);
+    border-color: var(--gray-700);
+}
+
+[data-theme="dark"] .bg-section {
+    background: var(--gray-800);
+}
+
+[data-theme="dark"] .job-section {
+    border-bottom-color: var(--gray-700);
+}
+
+/* Light Mode Specific Enhancements */
+[data-theme="light"] .applicant-skills,
+[data-theme="light"] .applicant-experience,
+[data-theme="light"] .applicant-date {
+    color: var(--gray-700);
+}
+
+[data-theme="light"] .applicant-location {
+    color: var(--gray-600);
+}
+
+[data-theme="light"] .table-modern tbody td {
+    color: var(--gray-700);
+    border-color: var(--gray-300);
+}
+
+[data-theme="light"] .bg-section {
+    background: var(--gray-100);
+}
+
+[data-theme="light"] .job-section {
+    border-bottom-color: var(--gray-300);
+}
+
+/* Ensure all text is properly contrasted */
+.applicant-header,
+.applicant-name,
+.applicant-skills,
+.applicant-experience,
+.applicant-date,
+.applicant-location {
+    transition: color var(--transition-fast);
+}
+
+/* Focus states for accessibility */
+.applicant-name:focus,
+.btn-modern:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Smooth animations */
+.applicant-row,
+.job-section,
+.stat-card {
+    transition: all var(--transition-normal);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+    
+    // Add confirmation for hire/reject actions
+    document.querySelectorAll('form').forEach(form => {
+        if (form.action.includes('hire_application') || form.action.includes('reject_application')) {
+            form.addEventListener('submit', function(e) {
+                const action = this.action.includes('hire_application') ? 'hire' : 'reject';
+                const applicantName = this.closest('tr').querySelector('.applicant-name').textContent;
+                
+                if (!confirm(`Are you sure you want to ${action} ${applicantName}?`)) {
+                    e.preventDefault();
+                }
+            });
+        }
+    });
+    
+    // Add animation to applicant rows
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+    
+    // Observe all applicant rows
+    document.querySelectorAll('.applicant-row').forEach(row => {
+        row.style.opacity = '0';
+        row.style.transform = 'translateY(20px)';
+        row.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(row);
+    });
+});
+</script>
+{% endblock %}

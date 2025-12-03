@@ -1,0 +1,1004 @@
+{% extends "base.html" %}
+{% block title %}Messages - QuickHire{% endblock %}
+{% block content %}
+<div class="container-fluid chat-container">
+    <div class="row g-0">
+        <!-- Chat Sidebar -->
+        <div class="col-md-4 col-lg-3">
+            <div class="chat-sidebar-modern">
+                <div class="chat-sidebar-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-comments me-2"></i>Messages
+                    </h4>
+                    <span class="badge-modern badge-primary-modern">{{ chat_rooms | length }}</span>
+                </div>
+                
+                <div class="chat-search">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control" placeholder="Search conversations...">
+                    </div>
+                </div>
+                
+                <div class="chat-conversations">
+                    {% if chat_rooms %}
+                        {% for room in chat_rooms %}
+                        <div class="conversation-item {% if room.id == current_room.id %}active{% endif %}" 
+                             data-room-id="{{ room.id }}">
+                            <div class="conversation-avatar">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div class="conversation-content">
+                                <div class="conversation-header">
+                                    <h6 class="conversation-name">{{ room.employer.employer_name }}</h6>
+                                    <span class="conversation-time">
+                                        {{ room.last_message_at.strftime('%H:%M') }}
+                                    </span>
+                                </div>
+                                <div class="conversation-preview">
+                                    {% if room.messages %}
+                                        <p class="mb-0">{{ room.messages[-1].message | truncate(50) }}</p>
+                                    {% else %}
+                                        <p class="mb-0 text-muted">No messages yet</p>
+                                    {% endif %}
+                                    {% if room.messages and not room.messages[-1].is_read and room.messages[-1].sender_id != user.id %}
+                                        <span class="unread-badge"></span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <!-- Empty State for Conversations -->
+                        <div class="empty-conversations">
+                            <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Conversations</h5>
+                            <p class="text-muted">Start a conversation with employers to see messages here.</p>
+                            <a href="{{ url_for('jobs') }}" class="btn-modern btn-primary-modern btn-sm">
+                                <i class="fas fa-search me-2"></i>Find Jobs
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="col-md-8 col-lg-9">
+            <div class="chat-main-modern">
+                {% if current_room %}
+                <!-- Chat Header -->
+                <div class="chat-header-modern">
+                    <div class="chat-partner-info">
+                        <div class="partner-avatar">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <div>
+                            <h5 class="partner-name">{{ current_room.employer.employer_name }}</h5>
+                            {% if current_room.employer.company_name %}
+                            <p class="partner-title mb-0">{{ current_room.employer.company_name }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="chat-actions">
+                        <a href="{{ url_for('profile', user_id=current_room.employer.user.id) }}" 
+                           class="btn-modern btn-outline-modern btn-sm"
+                           data-bs-toggle="tooltip" title="View Profile">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <button class="btn-modern btn-outline-modern btn-sm"
+                                data-bs-toggle="tooltip" title="More Options">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Chat Messages -->
+                <div class="chat-messages-modern" id="chat-messages">
+                    {% for message in messages %}
+                    <div class="message-wrapper {% if message.sender_id == user.id %}own-message{% else %}other-message{% endif %}" 
+                         data-message-id="{{ message.id }}">
+                        <div class="message-bubble">
+                            <div class="message-content">
+                                {% if message.sender_id != user.id %}
+                                <small class="message-sender">{{ message.sender.employer.employer_name if message.sender.role == 'employer' else message.sender.jobseeker.jobseeker_name }}</small>
+                                {% endif %}
+                                <p class="message-text">{{ message.message }}</p>
+                                <div class="message-meta">
+                                    <span class="message-time">{{ message.sent_at.strftime('%H:%M') }}</span>
+                                    {% if message.sender_id == user.id %}
+                                    <span class="message-status">
+                                        {% if message.is_read %}
+                                        <i class="fas fa-check-double text-primary" title="Read"></i>
+                                        {% else %}
+                                        <i class="fas fa-check text-muted" title="Delivered"></i>
+                                        {% endif %}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Chat Input -->
+                <div class="chat-input-modern">
+                    <form id="message-form" class="d-flex gap-2">
+                        <input type="hidden" id="room-id" value="{{ current_room.id }}">
+                        <div class="flex-grow-1">
+                            <input type="text" 
+                                   id="message-input" 
+                                   class="form-control chat-input" 
+                                   placeholder="Type your message..." 
+                                   autocomplete="off"
+                                   maxlength="1000">
+                        </div>
+                        <button type="submit" class="btn-modern btn-primary-modern send-button">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+                {% else %}
+                <!-- Welcome State -->
+                <div class="chat-welcome-state">
+                    <div class="welcome-content">
+                        <i class="fas fa-comments fa-4x text-primary mb-4"></i>
+                        <h3 class="text-muted mb-3">Welcome to Messages</h3>
+                        <p class="text-muted mb-4">Select a conversation from the sidebar to start messaging, or find employers to connect with.</p>
+                        <div class="d-flex gap-3 justify-content-center">
+                            <a href="{{ url_for('jobs') }}" class="btn-modern btn-primary-modern">
+                                <i class="fas fa-search me-2"></i>Find Jobs
+                            </a>
+                            <a href="{{ url_for('direct_hire') }}" class="btn-modern btn-outline-modern">
+                                <i class="fas fa-users me-2"></i>Browse Employers
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SocketIO Script - Enhanced Version -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const socket = io();
+    const roomId = {{ current_room.id if current_room else 0 }};
+    let isConnected = false;
+
+    // Initialize chat
+    function initializeChat() {
+        if (!roomId) {
+            console.log('No active chat room');
+            return;
+        }
+
+        // Join room if exists
+        socket.emit('join_room', { room_id: roomId });
+        
+        // Mark messages as read when opening chat
+        markMessagesAsRead();
+        
+        // Set up message form
+        setupMessageForm();
+        
+        // Set up typing indicators
+        setupTypingIndicators();
+        
+        // Set up event listeners
+        setupSocketListeners();
+        
+        // Scroll to bottom initially
+        scrollToBottom();
+    }
+
+    // Set up message form
+    function setupMessageForm() {
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        
+        if (messageForm && messageInput) {
+            messageForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                sendMessage();
+            });
+            
+            // Allow sending with Enter key (but allow Shift+Enter for new line)
+            messageInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        }
+    }
+
+    // Set up typing indicators
+    function setupTypingIndicators() {
+        const messageInput = document.getElementById('message-input');
+        let typingTimer;
+        
+        if (messageInput) {
+            messageInput.addEventListener('input', function() {
+                if (roomId) {
+                    socket.emit('typing', { room_id: roomId });
+                    
+                    clearTimeout(typingTimer);
+                    typingTimer = setTimeout(() => {
+                        socket.emit('stop_typing', { room_id: roomId });
+                    }, 1000);
+                }
+            });
+            
+            // Stop typing when input loses focus
+            messageInput.addEventListener('blur', function() {
+                socket.emit('stop_typing', { room_id: roomId });
+            });
+        }
+    }
+
+    // Set up SocketIO event listeners
+    function setupSocketListeners() {
+        // Connection events
+        socket.on('connect', function() {
+            isConnected = true;
+            console.log('Connected to chat server');
+            showStatus('Connected', 'success');
+        });
+
+        socket.on('disconnect', function() {
+            isConnected = false;
+            console.log('Disconnected from chat server');
+            showStatus('Disconnected', 'error');
+        });
+
+        socket.on('connect_error', function(error) {
+            console.error('Connection error:', error);
+            showStatus('Connection failed', 'error');
+        });
+
+        // Message events
+        socket.on('new_message', function(data) {
+            console.log('New message received:', data);
+            addMessageToChat(data, false);
+            markMessagesAsRead();
+            scrollToBottom();
+        });
+
+        socket.on('message_sent', function(data) {
+            console.log('Message sent confirmation:', data);
+            updateMessageStatus(data.message_id, 'delivered');
+            showStatus('Message sent', 'success');
+        });
+
+        // Typing indicators
+        socket.on('user_typing', function(data) {
+            showTypingIndicator(data.username);
+        });
+
+        socket.on('user_stop_typing', function() {
+            hideTypingIndicator();
+        });
+
+        // Error handling
+        socket.on('error', function(data) {
+            console.error('Chat error:', data);
+            showStatus(data.message || 'An error occurred', 'error');
+        });
+
+        // User joined/left events
+        socket.on('user_joined', function(data) {
+            console.log('User joined:', data);
+            showStatus(`${data.username} joined the chat`, 'info');
+        });
+
+        socket.on('user_left', function(data) {
+            console.log('User left:', data);
+            showStatus(`${data.username} left the chat`, 'info');
+        });
+    }
+
+    // Send message function
+    function sendMessage() {
+        const messageInput = document.getElementById('message-input');
+        const message = messageInput.value.trim();
+        
+        if (!message) {
+            showStatus('Message cannot be empty', 'error');
+            return;
+        }
+        
+        if (!roomId) {
+            showStatus('No active chat room', 'error');
+            return;
+        }
+        
+        if (!isConnected) {
+            showStatus('Not connected to chat server', 'error');
+            return;
+        }
+        
+        // Add message to UI immediately (optimistic update)
+        const tempMessage = {
+            id: 'temp-' + Date.now(),
+            sender_id: {{ user.id }},
+            sender_name: '{{ user.employer.employer_name if user.role == "employer" else user.jobseeker.jobseeker_name }}',
+            message: message,
+            sent_at: new Date().toISOString(),
+            is_own: true,
+            status: 'sending'
+        };
+        
+        addMessageToChat(tempMessage, true);
+        messageInput.value = '';
+        scrollToBottom();
+        
+        // Send via socket
+        socket.emit('send_message', {
+            room_id: roomId,
+            message: message
+        });
+    }
+
+    // Add message to chat UI
+    function addMessageToChat(messageData, isOwn) {
+        const messagesContainer = document.getElementById('chat-messages');
+        if (!messagesContainer) return;
+
+        const isOwnMessage = isOwn || messageData.sender_id === {{ user.id }};
+        const messageTime = new Date(messageData.sent_at).toLocaleTimeString([], { 
+            hour: '2-digit', minute: '2-digit' 
+        });
+
+        const messageHtml = `
+            <div class="message-wrapper ${isOwnMessage ? 'own-message' : 'other-message'}" 
+                 data-message-id="${messageData.id}">
+                <div class="message-bubble">
+                    <div class="message-content">
+                        ${!isOwnMessage ? `<small class="message-sender">${messageData.sender_name}</small>` : ''}
+                        <p class="message-text">${escapeHtml(messageData.message)}</p>
+                        <div class="message-meta">
+                            <span class="message-time">${messageTime}</span>
+                            ${isOwnMessage ? `
+                                <span class="message-status">
+                                    ${messageData.status === 'sending' ? 
+                                        '<i class="fas fa-clock text-muted" title="Sending..."></i>' :
+                                        messageData.status === 'delivered' ? 
+                                        '<i class="fas fa-check text-primary" title="Delivered"></i>' :
+                                        '<i class="fas fa-check text-muted" title="Sent"></i>'
+                                    }
+                                </span>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // If it's a temporary message, replace it; otherwise append
+        if (messageData.id.startsWith('temp-')) {
+            messagesContainer.insertAdjacentHTML('beforeend', messageHtml);
+        } else {
+            // Check if message already exists (to avoid duplicates)
+            const existingMessage = messagesContainer.querySelector(`[data-message-id="${messageData.id}"]`);
+            if (!existingMessage) {
+                messagesContainer.insertAdjacentHTML('beforeend', messageHtml);
+            }
+        }
+    }
+
+    // Update message status (for optimistic updates)
+    function updateMessageStatus(messageId, status) {
+        const messageElement = document.querySelector(`[data-message-id="temp-${messageId}"]`);
+        if (messageElement) {
+            // Update the temporary message ID to the real one
+            messageElement.setAttribute('data-message-id', messageId);
+            
+            const statusElement = messageElement.querySelector('.message-status');
+            if (statusElement) {
+                if (status === 'delivered') {
+                    statusElement.innerHTML = '<i class="fas fa-check text-primary" title="Delivered"></i>';
+                }
+            }
+        }
+    }
+
+    // Mark messages as read
+    function markMessagesAsRead() {
+        if (roomId) {
+            socket.emit('mark_read', { room_id: roomId });
+        }
+    }
+
+    // Show typing indicator
+    function showTypingIndicator(username) {
+        let typingIndicator = document.getElementById('typing-indicator');
+        
+        if (!typingIndicator) {
+            const messagesContainer = document.getElementById('chat-messages');
+            if (messagesContainer) {
+                typingIndicator = document.createElement('div');
+                typingIndicator.id = 'typing-indicator';
+                typingIndicator.className = 'typing-indicator';
+                typingIndicator.innerHTML = `
+                    <div class="typing-content">
+                        <div class="typing-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <span class="typing-text">${username} is typing...</span>
+                    </div>
+                `;
+                messagesContainer.appendChild(typingIndicator);
+            }
+        }
+        
+        scrollToBottom();
+    }
+
+    // Hide typing indicator
+    function hideTypingIndicator() {
+        const typingIndicator = document.getElementById('typing-indicator');
+        if (typingIndicator) {
+            typingIndicator.remove();
+        }
+    }
+
+    // Scroll to bottom of chat
+    function scrollToBottom() {
+        const messagesContainer = document.getElementById('chat-messages');
+        if (messagesContainer) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    }
+
+    // Show status message
+    function showStatus(message, type) {
+        // Remove existing status
+        const existingStatus = document.getElementById('chat-status');
+        if (existingStatus) {
+            existingStatus.remove();
+        }
+
+        // Create new status
+        const statusElement = document.createElement('div');
+        statusElement.id = 'chat-status';
+        statusElement.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} alert-dismissible fade show`;
+        statusElement.style.cssText = `
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 200px;
+            max-width: 300px;
+        `;
+        statusElement.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        document.body.appendChild(statusElement);
+
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            if (statusElement.parentNode) {
+                statusElement.remove();
+            }
+        }, 3000);
+    }
+
+    // Utility function to escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Initialize chat when page loads
+    initializeChat();
+
+    // Add CSS for typing indicator
+    const style = document.createElement('style');
+    style.textContent = `
+        .typing-indicator {
+            padding: 1rem;
+            opacity: 0.7;
+        }
+        
+        .typing-content {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .typing-dots {
+            display: flex;
+            gap: 0.25rem;
+        }
+        
+        .typing-dots span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typingAnimation {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        
+        .typing-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-style: italic;
+        }
+        
+        .message-sender {
+            color: var(--primary);
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+    `;
+    document.head.appendChild(style);
+});
+</script>
+
+<style>
+/* ===== CHAT STYLES ===== */
+.chat-container {
+    height: calc(100vh - 80px);
+    background: var(--bg-primary);
+}
+
+/* Chat Sidebar */
+.chat-sidebar-modern {
+    background: var(--bg-card);
+    border-right: 1px solid var(--border-color);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-sidebar-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chat-sidebar-header h4 {
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.chat-search {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.chat-search .input-group {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.chat-search .input-group-text {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+}
+
+.chat-search .form-control {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+}
+
+.chat-search .form-control:focus {
+    box-shadow: none;
+}
+
+.chat-conversations {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem;
+}
+
+/* Conversation Items */
+.conversation-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    margin-bottom: 0.5rem;
+}
+
+.conversation-item:hover {
+    background: var(--bg-secondary);
+}
+
+.conversation-item.active {
+    background: rgba(67, 97, 238, 0.1);
+    border: 1px solid var(--primary);
+}
+
+.conversation-avatar {
+    width: 50px;
+    height: 50px;
+    background: var(--gradient-primary);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.conversation-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.conversation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.conversation-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.conversation-time {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+}
+
+.conversation-preview {
+    position: relative;
+}
+
+.conversation-preview p {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.4;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.unread-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 8px;
+    height: 8px;
+    background: var(--primary);
+    border-radius: 50%;
+}
+
+/* Empty Conversations */
+.empty-conversations {
+    padding: 3rem 2rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.empty-conversations i {
+    opacity: 0.5;
+    margin-bottom: 1rem;
+}
+
+.empty-conversations h5 {
+    margin-bottom: 0.5rem;
+}
+
+.empty-conversations p {
+    margin-bottom: 1.5rem;
+}
+
+/* Main Chat Area */
+.chat-main-modern {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-primary);
+}
+
+/* Chat Header */
+.chat-header-modern {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chat-partner-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.partner-avatar {
+    width: 50px;
+    height: 50px;
+    background: var(--gradient-primary);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.partner-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+}
+
+.partner-title {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.chat-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Chat Messages */
+.chat-messages-modern {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: var(--bg-primary);
+}
+
+.message-wrapper {
+    display: flex;
+    max-width: 70%;
+}
+
+.own-message {
+    align-self: flex-end;
+}
+
+.other-message {
+    align-self: flex-start;
+}
+
+.message-bubble {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 0.875rem 1rem;
+    position: relative;
+    box-shadow: var(--shadow-sm);
+}
+
+.own-message .message-bubble {
+    background: var(--gradient-primary);
+    border-color: transparent;
+}
+
+.message-content {
+    color: var(--text-primary);
+}
+
+.own-message .message-content {
+    color: white;
+}
+
+.message-text {
+    margin: 0 0 0.5rem 0;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+.message-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.own-message .message-time {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.message-status {
+    font-size: 0.75rem;
+}
+
+/* Chat Input */
+.chat-input-modern {
+    background: var(--bg-card);
+    border-top: 1px solid var(--border-color);
+    padding: 1.5rem;
+}
+
+.chat-input {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 0.875rem 1rem;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.chat-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.1);
+}
+
+.send-button {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Welcome State */
+.chat-welcome-state {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary);
+}
+
+.welcome-content {
+    text-align: center;
+    max-width: 400px;
+    padding: 2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .chat-container .row > div:first-child {
+        position: fixed;
+        left: -100%;
+        top: 0;
+        bottom: 0;
+        z-index: 1040;
+        width: 100%;
+        max-width: 300px;
+        transition: left 0.3s ease;
+    }
+    
+    .chat-container .row > div:first-child.show {
+        left: 0;
+    }
+    
+    .chat-container .row > div:last-child {
+        width: 100%;
+    }
+    
+    .message-wrapper {
+        max-width: 85%;
+    }
+    
+    .chat-header-modern {
+        padding: 1rem;
+    }
+    
+    .chat-messages-modern {
+        padding: 1rem;
+    }
+    
+    .chat-input-modern {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .message-wrapper {
+        max-width: 90%;
+    }
+    
+    .conversation-item {
+        padding: 0.75rem;
+    }
+    
+    .conversation-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    .partner-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+}
+
+/* Dark Mode Specific Styles */
+[data-theme="dark"] .chat-sidebar-modern {
+    background: var(--gray-800);
+    border-right-color: var(--gray-700);
+}
+
+[data-theme="dark"] .chat-sidebar-header {
+    border-bottom-color: var(--gray-700);
+}
+
+[data-theme="dark"] .chat-search {
+    border-bottom-color: var(--gray-700);
+}
+
+[data-theme="dark"] .chat-search .input-group {
+    background: var(--gray-700);
+}
+
+[data-theme="dark"] .conversation-item:hover {
+    background: var(--gray-700);
+}
+
+[data-theme="dark"] .chat-header-modern {
+    background: var(--gray-800);
+    border-bottom-color: var(--gray-700);
+}
+
+[data-theme="dark"] .message-bubble {
+    background: var(--gray-800);
+    border-color: var(--gray-700);
+}
+
+[data-theme="dark"] .chat-input-modern {
+    background: var(--gray-800);
+    border-top-color: var(--gray-700);
+}
+
+[data-theme="dark"] .chat-input {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+}
+
+[data-theme="dark"] .empty-conversations,
+[data-theme="dark"] .welcome-content {
+    color: var(--gray-400);
+}
+</style>
+{% endblock %}

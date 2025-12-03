@@ -1,0 +1,1143 @@
+{% extends "base.html" %}
+{% block title %}{{ profile.employer_name }} - Employer Profile{% endblock %}
+{% block content %}
+<div class="profile-container">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="header-background">
+            <div class="background-overlay"></div>
+        </div>
+        <div class="header-content">
+            <div class="profile-avatar">
+                <div class="avatar-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+            </div>
+            <div class="profile-info">
+                <h1 class="profile-name">{{ profile.employer_name }}</h1>
+                <p class="profile-role">Employer Account</p>
+                <div class="profile-meta">
+                    <span class="meta-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        {{ profile.location }}
+                    </span>
+                    {% if profile.email %}
+                    <span class="meta-item">
+                        <i class="fas fa-envelope"></i>
+                        {{ profile.email }}
+                    </span>
+                    {% endif %}
+                    {% if profile.company_name %}
+                    <span class="meta-item">
+                        <i class="fas fa-briefcase"></i>
+                        {{ profile.company_name }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-content">
+        <div class="content-layout">
+            <!-- Main Content Column -->
+            <div class="main-column">
+                <!-- Profile Editing Section -->
+                {% if is_own_profile %}
+                <section class="profile-section">
+                    <div class="section-header">
+                        <h2>
+                            <i class="fas fa-user-edit"></i>
+                            Profile Management
+                        </h2>
+                        <div class="profile-actions-header">
+                            <button id="toggleEditProfile" class="btn-modern btn-primary-modern btn-sm">
+                                <i class="fas fa-edit me-1"></i>Edit Profile
+                            </button>
+                            <div id="editProfileActions" class="edit-actions" style="display: none;">
+                                <button id="saveProfile" class="btn-modern btn-primary-modern btn-sm me-2">
+                                    <i class="fas fa-save me-1"></i>Save Changes
+                                </button>
+                                <button id="cancelEdit" class="btn-modern btn-outline-modern btn-sm">
+                                    <i class="fas fa-times me-1"></i>Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-content">
+                        <div class="profile-editing-content">
+                            <!-- Read-only View -->
+                            <div id="profileReadView">
+                                <div class="details-grid">
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="detail-content">
+                                            <label>Employer Name</label>
+                                            <p class="info-value" id="displayName">{{ profile.employer_name }}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fas fa-building"></i>
+                                        </div>
+                                        <div class="detail-content">
+                                            <label>Company Name</label>
+                                            <p class="info-value" id="displayCompany">
+                                                {% if profile.company_name %}
+                                                    {{ profile.company_name }}
+                                                {% else %}
+                                                    <span class="text-muted">Not provided</span>
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fas fa-envelope"></i>
+                                        </div>
+                                        <div class="detail-content">
+                                            <label>Email Address</label>
+                                            <p class="info-value" id="displayEmail">
+                                                {% if profile.email %}
+                                                    {{ profile.email }}
+                                                {% else %}
+                                                    <span class="text-muted">Not provided</span>
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </div>
+                                        <div class="detail-content">
+                                            <label>Location</label>
+                                            <p class="info-value" id="displayLocation">{{ profile.location }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Editable View -->
+                            <div id="profileEditView" style="display: none;">
+                                <form id="profileEditForm" class="profile-edit-form">
+                                    <div class="edit-form-grid">
+                                        <div class="form-group-modern">
+                                            <label for="editName" class="form-label">
+                                                <i class="fas fa-user me-2"></i>Employer Name
+                                            </label>
+                                            <input type="text" class="form-control" id="editName" name="name" 
+                                                   value="{{ profile.employer_name }}" required>
+                                            <div class="form-text">Your name as you'd like job seekers to see it</div>
+                                        </div>
+
+                                        <div class="form-group-modern">
+                                            <label for="editCompany" class="form-label">
+                                                <i class="fas fa-building me-2"></i>Company Name
+                                            </label>
+                                            <input type="text" class="form-control" id="editCompany" name="company_name" 
+                                                   value="{{ profile.company_name or '' }}">
+                                            <div class="form-text">Your company or organization name</div>
+                                        </div>
+
+                                        <div class="form-group-modern">
+                                            <label for="editEmail" class="form-label">
+                                                <i class="fas fa-envelope me-2"></i>Email Address
+                                            </label>
+                                            <input type="email" class="form-control" id="editEmail" name="email" 
+                                                   value="{{ profile.email or '' }}">
+                                            <div class="form-text">Your contact email for job seekers</div>
+                                        </div>
+
+                                        <div class="form-group-modern">
+                                            <label for="editLocation" class="form-label">
+                                                <i class="fas fa-map-marker-alt me-2"></i>Location
+                                            </label>
+                                            <input type="text" class="form-control" id="editLocation" name="location" 
+                                                   value="{{ profile.location }}" required>
+                                            <div class="form-text">Your company location</div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Loading State -->
+                            <div id="profileLoading" class="profile-loading" style="display: none;">
+                                <div class="loading-spinner"></div>
+                                <p>Saving changes...</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                {% endif %}
+
+                <!-- Posted Jobs Section 
+                <section class="profile-section">
+                    <div class="section-header">
+                        <h2>
+                            <i class="fas fa-briefcase"></i>
+                            Posted Jobs
+                        </h2>
+                        <span class="section-badge">{{ user.jobs | length }}</span>
+                    </div>
+                    <div class="section-content">
+                        {% if user.jobs %}
+                        <div class="applications-table">
+                            <div class="table-responsive">
+                                <table class="modern-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Job Title</th>
+                                            <th>Location</th>
+                                            <th>Salary</th>
+                                            <th>Required Skills</th>
+                                            <th>Applications</th>
+                                            <th>Posted On</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for job in user.jobs %}
+                                        <tr>
+                                            <td>
+                                                <div class="job-info">
+                                                    <i class="fas fa-briefcase"></i>
+                                                    <div>
+                                                        <strong>{{ job.title }}</strong>
+                                                        <small>{{ job.description[:100] }}{% if job.description|length > 100 %}...{% endif %}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <i class="fas fa-map-marker-alt"></i>
+                                                {{ job.location }}
+                                            </td>
+                                            <td class="salary">₹{{ "%.0f"|format(job.pay) }}</td>
+                                            <td>{{ job.required_skills }}</td>
+                                            <td>
+                                                <span class="applications-count">{{ job.applications | length }}</span>
+                                            </td>
+                                            <td class="date">
+                                                {{ job.posted_at.strftime('%b %d, %Y') }}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-briefcase"></i>
+                            <h3>No Jobs Posted</h3>
+                            <p>This employer hasn't posted any jobs yet.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </section> -->  
+            
+
+                <!-- Reviews Section 
+                <section class="profile-section">
+                    <div class="section-header">
+                        <h2>
+                            <i class="fas fa-star"></i>
+                            Reviews Received
+                        </h2>
+                        <span class="section-badge">{{ user.reviews_received | length }}</span>
+                    </div>
+                    <div class="section-content">
+                        {% if user.reviews_received %}
+                        <div class="reviews-stats">
+                            <div class="rating-overview">
+                                <div class="average-rating">
+                                    {% set total_rating = user.reviews_received | sum(attribute='rating') %}
+                                    {% set avg_rating = (total_rating / user.reviews_received | length) if user.reviews_received else 0 %}
+                                    <div class="rating-number">{{ "%.1f" | format(avg_rating) }}</div>
+                                    <div class="rating-stars">
+                                        {% for i in range(5) %}
+                                            <i class="fas fa-star {{ 'active' if i < avg_rating|round(0, 'floor')|int else '' }}"></i>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="rating-count">{{ user.reviews_received | length }} review{{ 's' if user.reviews_received | length != 1 }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="reviews-list">
+                            {% for review in user.reviews_received %}
+                            <div class="review-card">
+                                <div class="review-header">
+                                    <div class="reviewer-info">
+                                        <h4>{{ review.job.title if review.job else "Completed Job" }}</h4>
+                                        <p>By {{ review.reviewer.jobseeker.jobseeker_name if review.reviewer.role == 'jobseeker' else review.reviewer.employer.employer_name }}</p>
+                                    </div>
+                                    <div class="review-rating">
+                                        <div class="stars">
+                                            {% for i in range(5) %}
+                                                <i class="fas fa-star {{ 'active' if i < review.rating else '' }}"></i>
+                                            {% endfor %}
+                                        </div>
+                                        <small>{{ review.created_at.strftime('%b %d, %Y') }}</small>
+                                    </div>
+                                </div>
+                                {% if review.comment %}
+                                <div class="review-comment">
+                                    "{{ review.comment }}"
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-star"></i>
+                            <h3>No Reviews Yet</h3>
+                            <p>This employer hasn't received any reviews yet.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </section>
+            </div> -->
+
+            <!-- Sidebar Column -->
+            <div class="sidebar-column">
+                <!-- Quick Actions 
+                <div class="sidebar-card">
+                    <h3>Quick Actions</h3>
+                    <div class="action-buttons">
+                        {% if is_own_profile %}
+                            <a href="{{ url_for('dashboard') }}" class="action-btn primary">
+                                <i class="fas fa-tachometer-alt"></i>
+                                Go to Dashboard
+                            </a>
+                            <a href="{{ url_for('post_job') }}" class="action-btn primary">
+                                <i class="fas fa-plus"></i>
+                                Post New Job
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('start_chat_with_employer', employer_id=user.id) if current_user and current_user.role == 'jobseeker' else '#' }}" 
+                               class="action-btn primary">
+                                <i class="fas fa-comment"></i>
+                                Start Chat
+                            </a>
+                        {% endif %}
+                        <a href="{{ url_for('index') }}" class="action-btn secondary">
+                            <i class="fas fa-home"></i>
+                            Back to Home
+                        </a>
+                    </div>
+                </div> -->
+
+                <!-- Employer Stats 
+                <div class="sidebar-card">
+                    <h3>Employer Stats</h3>
+                    <div class="stats-list">
+                        <div class="stat-item">
+                            <div class="stat-icon">
+                                <i class="fas fa-briefcase"></i>
+                            </div>
+                            <div class="stat-info">
+                                <strong>{{ user.jobs | length }}</strong>
+                                <span>Jobs Posted</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-info">
+                                <strong>
+                                    {% set total_applicants = [] %}
+                                    {% for job in user.jobs %}
+                                        {% set _ = total_applicants.extend(job.applications) %}
+                                    {% endfor %}
+                                    {{ total_applicants | length }}
+                                </strong>
+                                <span>Total Applicants</span>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="stat-info">
+                                <strong>{{ user.reviews_received | length }}</strong>
+                                <span>Reviews</span>
+                            </div>
+                        </div>
+                    </div>
+                </div> -->
+
+                <!-- Contact Information -->
+                <div class="sidebar-card">
+                    <h3>Contact Info</h3>
+                    <div class="contact-info">
+                        {% if is_own_profile or (current_user and current_user.role == 'jobseeker' and user.id in current_user.jobseeker.get_hired_employer_ids()) %}
+                        <div class="contact-item">
+                            <i class="fas fa-phone"></i>
+                            <span>{{ user.phone }}</span>
+                        </div>
+                        {% endif %}
+                        {% if profile.email %}
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <span>{{ profile.email }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>{{ profile.location }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ===== EMPLOYER PROFILE SPECIFIC STYLES ===== */
+
+/* Profile Container */
+.profile-container {
+    min-height: 100vh;
+    background: var(--bg-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Profile Header */
+.profile-header {
+    position: relative;
+    background: var(--gradient-primary);
+    color: white;
+    padding: 4rem 0 3rem;
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.header-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--gradient-primary);
+}
+
+.background-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.header-content {
+    position: relative;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.profile-avatar {
+    flex-shrink: 0;
+}
+
+.avatar-icon {
+    width: 120px;
+    height: 120px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    backdrop-filter: blur(10px);
+    transition: var(--transition-normal);
+}
+
+.avatar-icon:hover {
+    transform: scale(1.05);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.profile-name {
+    font-size: 2.75rem;
+    font-weight: 800;
+    margin: 0 0 0.5rem 0;
+    color: white;
+    line-height: 1.1;
+}
+
+.profile-role {
+    font-size: 1.25rem;
+    opacity: 0.9;
+    margin: 0 0 1.5rem 0;
+    font-weight: 500;
+}
+
+.profile-meta {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1rem;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+.meta-item i {
+    font-size: 1.1rem;
+}
+
+/* Profile Content */
+.profile-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem 4rem;
+}
+
+.content-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 2.5rem;
+    align-items: start;
+}
+
+/* Profile Sections */
+.profile-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    margin-bottom: 2rem;
+    overflow: hidden;
+    transition: var(--transition-normal);
+    box-shadow: var(--shadow-sm);
+}
+
+.profile-section:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.section-header {
+    padding: 1.75rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.section-header h2 {
+    margin: 0;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.section-header h2 i {
+    color: var(--primary);
+    font-size: 1.25rem;
+}
+
+.section-badge {
+    background: var(--primary);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    min-width: 2.5rem;
+    text-align: center;
+}
+
+.section-content {
+    padding: 2rem;
+}
+
+/* Profile Editing Styles */
+.profile-actions-header {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.edit-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.profile-edit-form {
+    padding: 0.5rem 0;
+}
+
+.edit-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+}
+
+.form-group-modern {
+    margin-bottom: 1.5rem;
+}
+
+.form-group-modern:last-child {
+    margin-bottom: 0;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+    gap: 0.5rem;
+}
+
+.form-label i {
+    color: var(--primary);
+    width: 16px;
+    text-align: center;
+}
+
+.form-control {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: var(--transition-fast);
+    width: 100%;
+    font-family: inherit;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    background: var(--bg-card);
+}
+
+.form-text {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+    line-height: 1.4;
+}
+
+/* Details Grid */
+.details-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    border-radius: var(--radius-md);
+    transition: background var(--transition-fast);
+    border: 1px solid transparent;
+}
+
+.detail-item:hover {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+.detail-icon {
+    width: 56px;
+    height: 56px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    border: 2px solid var(--border-color);
+    transition: var(--transition-fast);
+}
+
+.detail-item:hover .detail-icon {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: scale(1.05);
+}
+
+.detail-content label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-content p {
+    margin: 0;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1.1rem;
+    line-height: 1.4;
+}
+
+.text-muted {
+    color: var(--text-muted) !important;
+    font-style: italic;
+    font-weight: 500 !important;
+}
+
+/* Sidebar Styles */
+.sidebar-column {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    position: sticky;
+    top: 2rem;
+}
+
+.sidebar-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    transition: var(--transition-normal);
+    box-shadow: var(--shadow-sm);
+}
+
+.sidebar-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.sidebar-card h3 {
+    margin: 0 0 1.5rem 0;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.375rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.75rem;
+}
+
+/* Stats List */
+.stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.25rem;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    transition: background var(--transition-fast);
+    border: 1px solid transparent;
+}
+
+.stat-item:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+    transform: translateX(4px);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    transition: var(--transition-fast);
+}
+
+.stat-item:hover .stat-icon {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.stat-info {
+    flex: 1;
+}
+
+.stat-info strong {
+    display: block;
+    color: var(--text-primary);
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.stat-info span {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Contact Info */
+.contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    transition: background var(--transition-fast);
+    border: 1px solid transparent;
+}
+
+.contact-item:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+    transform: translateX(4px);
+}
+
+.contact-item i {
+    color: var(--primary);
+    width: 20px;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.contact-item span {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    font-weight: 600;
+    transition: var(--transition-normal);
+    text-align: left;
+    border: 2px solid transparent;
+    font-size: 1rem;
+}
+
+.action-btn.primary {
+    background: var(--gradient-primary);
+    color: white;
+}
+
+.action-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.action-btn.secondary {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+}
+
+.action-btn.secondary:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.action-btn i {
+    font-size: 1.25rem;
+    width: 20px;
+    text-align: center;
+}
+
+/* Loading State */
+.profile-loading {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-secondary);
+}
+
+.loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--border-color);
+    border-left: 4px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .content-layout {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    
+    .sidebar-column {
+        position: static;
+        order: -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-content {
+        padding: 0 1.5rem 3rem;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+        padding: 0 1.5rem;
+    }
+    
+    .profile-meta {
+        justify-content: center;
+    }
+    
+    .section-content {
+        padding: 1.5rem;
+    }
+    
+    .section-header {
+        padding: 1.5rem;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .profile-actions-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .edit-actions {
+        justify-content: center;
+    }
+    
+    .edit-form-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .profile-header {
+        padding: 3rem 0 2rem;
+    }
+    
+    .profile-name {
+        font-size: 2.25rem;
+    }
+    
+    .avatar-icon {
+        width: 100px;
+        height: 100px;
+        font-size: 2.5rem;
+    }
+    
+    .details-grid {
+        gap: 1.25rem;
+    }
+    
+    .detail-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+        padding: 1.25rem;
+    }
+    
+    .sidebar-card {
+        padding: 1.5rem;
+    }
+    
+    .action-btn {
+        padding: 1rem 1.25rem;
+        font-size: 0.95rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Profile Editing Functionality for Employer
+    const toggleEditBtn = document.getElementById('toggleEditProfile');
+    const editActions = document.getElementById('editProfileActions');
+    const profileReadView = document.getElementById('profileReadView');
+    const profileEditView = document.getElementById('profileEditView');
+    const profileLoading = document.getElementById('profileLoading');
+    const saveProfileBtn = document.getElementById('saveProfile');
+    const cancelEditBtn = document.getElementById('cancelEdit');
+    const profileEditForm = document.getElementById('profileEditForm');
+
+    if (toggleEditBtn && {{ 'true' if is_own_profile else 'false' }}) {
+        let isEditing = false;
+
+        function toggleEditMode() {
+            isEditing = !isEditing;
+            
+            if (isEditing) {
+                // Enter edit mode
+                toggleEditBtn.style.display = 'none';
+                editActions.style.display = 'flex';
+                profileReadView.style.display = 'none';
+                profileEditView.style.display = 'block';
+                
+                // Focus on first field
+                document.getElementById('editName').focus();
+            } else {
+                // Exit edit mode
+                toggleEditBtn.style.display = 'block';
+                editActions.style.display = 'none';
+                profileReadView.style.display = 'block';
+                profileEditView.style.display = 'none';
+            }
+        }
+
+        async function saveProfile() {
+            const formData = new FormData(profileEditForm);
+            
+            try {
+                // Show loading state
+                profileLoading.style.display = 'block';
+                editActions.style.display = 'none';
+                
+                const response = await fetch('/update_employer_profile', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update display values
+                    document.getElementById('displayName').textContent = result.data.name;
+                    document.getElementById('displayCompany').textContent = result.data.company_name || 'Not provided';
+                    document.getElementById('displayEmail').textContent = result.data.email || 'Not provided';
+                    document.getElementById('displayLocation').textContent = result.data.location;
+                    
+                    // Update profile header
+                    document.querySelector('.profile-name').textContent = result.data.name;
+                    
+                    // Update profile meta
+                    const companyMeta = document.querySelector('.profile-meta .meta-item:nth-child(3)');
+                    if (companyMeta && result.data.company_name) {
+                        companyMeta.innerHTML = `<i class="fas fa-briefcase"></i>${result.data.company_name}`;
+                    }
+                    
+                    const emailMeta = document.querySelector('.profile-meta .meta-item:nth-child(2)');
+                    if (emailMeta && result.data.email) {
+                        emailMeta.innerHTML = `<i class="fas fa-envelope"></i>${result.data.email}`;
+                    }
+                    
+                    const locationMeta = document.querySelector('.profile-meta .meta-item:first-child');
+                    if (locationMeta) {
+                        locationMeta.innerHTML = `<i class="fas fa-map-marker-alt"></i>${result.data.location}`;
+                    }
+                    
+                    // Show success message
+                    alert('Profile updated successfully!');
+                    toggleEditMode();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error saving profile:', error);
+                alert('An error occurred while saving your profile.');
+            } finally {
+                profileLoading.style.display = 'none';
+                editActions.style.display = 'flex';
+            }
+        }
+
+        // Event Listeners
+        toggleEditBtn.addEventListener('click', toggleEditMode);
+        cancelEditBtn.addEventListener('click', toggleEditMode);
+        saveProfileBtn.addEventListener('click', saveProfile);
+
+        // Allow form submission with Enter key
+        profileEditForm.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && isEditing) {
+                e.preventDefault();
+                saveProfile();
+            }
+        });
+    }
+
+    // Add smooth animations
+    const profileSections = document.querySelectorAll('.profile-section');
+    profileSections.forEach((section, index) => {
+        section.style.animationDelay = `${index * 0.1}s`;
+        section.classList.add('fade-in-up');
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,431 @@
+{% extends "base.html" %}
+{% block title %}My Hires - QuickHire{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 fw-bold text-gradient mb-2">
+                        <i class="fas fa-user-check me-2"></i>My Direct Hires
+                    </h1>
+                    <p class="text-muted-dark mb-0">View all employers who have directly hired you</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('jobs') }}" class="btn-modern btn-primary-modern">
+                        <i class="fas fa-search me-2"></i>Find More Jobs
+                    </a>
+                    <a href="{{ url_for('dashboard') }}" class="btn-modern btn-outline-modern">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category == 'error' and 'danger' or 'success' }} alert-modern mb-4" role="alert">
+                    <i class="fas fa-{{ category == 'error' and 'exclamation-triangle' or 'check-circle' }} me-2"></i>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-6">
+            <div class="card-modern stat-card">
+                <div class="card-body text-center">
+                    <div class="stat-icon bg-primary mx-auto mb-3">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h3 class="stat-number text-primary">{{ direct_hires|length }}</h3>
+                    <p class="stat-label">Total Employers</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card-modern stat-card">
+                <div class="card-body text-center">
+                    <div class="stat-icon bg-success mx-auto mb-3">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <h3 class="stat-number text-success">
+                        {{ direct_hires|selectattr("status", "equalto", "active")|list|length }}
+                    </h3>
+                    <p class="stat-label">Active Hires</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Hires List -->
+    <div class="card-modern">
+        <div class="card-header-modern">
+            <h4 class="mb-0 text-white">
+                <i class="fas fa-building me-2"></i>Employers Who Hired You
+                <span class="badge bg-white text-primary ms-2">{{ direct_hires|length }}</span>
+            </h4>
+        </div>
+        <div class="card-body">
+            {% if direct_hires %}
+                <div class="table-responsive">
+                    <table class="table table-modern">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">Employer</th>
+                                <th>Company</th>
+                                <th>Location</th>
+                                <th>Hired Date</th>
+                                <th>Status</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for hire in direct_hires %}
+                                <tr class="hire-row">
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="employer-avatar me-3">
+                                                <i class="fas fa-building"></i>
+                                            </div>
+                                            <div>
+                                                <span class="employer-name fw-bold">
+                                                    {{ hire.employer.employer_name }}
+                                                </span>
+                                                <br>
+                                                <small class="employer-contact">
+                                                    <i class="fas fa-envelope me-1"></i>{{ hire.employer.email }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="company-name">
+                                            {{ hire.employer.company_name or 'Individual' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="employer-location">
+                                            <i class="fas fa-map-marker-alt me-1"></i>
+                                            {{ hire.employer.location }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="hire-date">
+                                            {{ hire.hired_at.strftime('%Y-%m-%d') }}
+                                        </span>
+                                        <br>
+                                        <small class="text-muted">
+                                            {{ hire.hired_at.strftime('%I:%M %p') }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge status-badge-{{ hire.status }}">
+                                            {% if hire.status == 'completed' %}
+                                                <i class="fas fa-check-circle me-1"></i>Completed
+                                            {% elif hire.status == 'terminated' %}
+                                                <i class="fas fa-times-circle me-1"></i>Terminated
+                                            {% else %}
+                                                <i class="fas fa-user-check me-1"></i>Active
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <div class="d-flex gap-2 justify-content-end">
+                                            <!-- Chat Button -->
+                                            <a href="{{ url_for('start_chat_with_employer', employer_id=hire.employer.id) }}" 
+                                               class="btn-modern btn-primary-modern btn-sm"
+                                               data-bs-toggle="tooltip" title="Chat with employer">
+                                                <i class="fas fa-comment me-1"></i>Chat
+                                            </a>
+                                            
+                                            <!-- Contact Info Button -->
+                                            <button class="btn-modern btn-outline-modern btn-sm"
+                                                    data-bs-toggle="tooltip" 
+                                                    title="View contact information"
+                                                    onclick="showEmployerContact('{{ hire.employer.employer_name }}', '{{ hire.employer.email }}', '{{ hire.employer.user.phone }}')">
+                                                <i class="fas fa-phone me-1"></i>Contact
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <!-- Empty State -->
+                <div class="text-center py-5">
+                    <div class="empty-state">
+                        <i class="fas fa-user-check fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted-dark mb-3">No Direct Hires Yet</h4>
+                        <p class="text-muted-dark mb-4">
+                            You haven't been directly hired by any employers yet. 
+                            Keep applying to jobs and employers may reach out to hire you directly!
+                        </p>
+                        <div class="d-flex gap-3 justify-content-center flex-wrap">
+                            <a href="{{ url_for('jobs') }}" class="btn-modern btn-primary-modern">
+                                <i class="fas fa-search me-2"></i>Browse Jobs
+                            </a>
+                            <a href="{{ url_for('map_jobs') }}" class="btn-modern btn-outline-modern">
+                                <i class="fas fa-map-marked-alt me-2"></i>Find Jobs on Map
+                            </a>
+                            <a href="{{ url_for('dashboard') }}" class="btn-modern btn-outline-modern">
+                                <i class="fas fa-tachometer-alt me-2"></i>My Dashboard
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* My Hires Page Specific Styles */
+.employer-avatar {
+    width: 40px;
+    height: 40px;
+    background: var(--gradient-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+}
+
+.employer-name {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.employer-contact {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.company-name {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.employer-location {
+    color: var(--text-secondary);
+}
+
+.hire-date {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.hire-row {
+    transition: all var(--transition-fast);
+    border-color: var(--border-color) !important;
+}
+
+.hire-row:hover {
+    background: rgba(67, 97, 238, 0.05) !important;
+    transform: scale(1.01);
+}
+
+/* Status Badges */
+.status-badge-active {
+    background: rgba(40, 167, 69, 0.15);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.status-badge-completed {
+    background: rgba(108, 117, 125, 0.15);
+    color: #6c757d;
+    border: 1px solid rgba(108, 117, 125, 0.3);
+}
+
+.status-badge-terminated {
+    background: rgba(220, 53, 69, 0.15);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+/* Statistics Cards */
+.stat-card {
+    transition: all 0.3s ease;
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+/* Empty State */
+.empty-state h4,
+.empty-state p {
+    color: var(--text-secondary) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hire-row td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .employer-avatar {
+        width: 35px;
+        height: 35px;
+        font-size: 0.875rem;
+    }
+    
+    .d-flex.gap-2 {
+        gap: 0.5rem !important;
+    }
+    
+    .btn-modern.btn-sm {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.8rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+}
+
+/* Dark Mode Adjustments */
+[data-theme="dark"] .company-name,
+[data-theme="dark"] .hire-date {
+    color: var(--gray-300);
+}
+
+[data-theme="dark"] .employer-contact,
+[data-theme="dark"] .employer-location {
+    color: var(--gray-400);
+}
+
+[data-theme="dark"] .table-modern tbody td {
+    color: var(--gray-300);
+    border-color: var(--gray-700);
+}
+
+[data-theme="dark"] .stat-card {
+    background: var(--gray-800);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+    
+    // Add animation to hire rows
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+    
+    // Observe all hire rows
+    document.querySelectorAll('.hire-row').forEach(row => {
+        row.style.opacity = '0';
+        row.style.transform = 'translateY(20px)';
+        row.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(row);
+    });
+});
+
+// Function to show employer contact information
+function showEmployerContact(employerName, email, phone) {
+    Swal.fire({
+        title: `Contact ${employerName}`,
+        html: `
+            <div class="text-start">
+                <div class="mb-3">
+                    <strong><i class="fas fa-envelope me-2 text-primary"></i>Email:</strong>
+                    <div class="mt-1">
+                        <a href="mailto:${email}" class="text-decoration-none">${email}</a>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <strong><i class="fas fa-phone me-2 text-primary"></i>Phone:</strong>
+                    <div class="mt-1">
+                        <a href="tel:${phone}" class="text-decoration-none">${phone}</a>
+                    </div>
+                </div>
+                <div class="alert alert-info mt-3">
+                    <small>
+                        <i class="fas fa-info-circle me-1"></i>
+                        You can contact this employer directly via email or phone.
+                    </small>
+                </div>
+            </div>
+        `,
+        icon: 'info',
+        confirmButtonText: 'Close',
+        confirmButtonColor: '#4361ee',
+        width: '500px'
+    });
+}
+
+// Add confirmation for chat actions
+document.querySelectorAll('a[href*="start_chat"]').forEach(link => {
+    link.addEventListener('click', function(e) {
+        const employerName = this.closest('tr').querySelector('.employer-name').textContent;
+        if (!confirm(`Start a chat with ${employerName}?`)) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

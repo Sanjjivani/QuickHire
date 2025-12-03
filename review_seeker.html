@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+{% block title %}Leave Review - QuickHire{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card card-modern shadow-lg">
+                <div class="card-header card-header-modern">
+                    <h4 class="mb-0 text-white">
+                        <i class="fas fa-star me-2"></i>Leave Review
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Job Seeker Info -->
+                    <div class="seeker-info mb-4 p-3 bg-light rounded">
+                        <h5 class="text-primary mb-2">Reviewing: {{ jobseeker.jobseeker_name }}</h5>
+                        <p class="mb-1"><strong>Job:</strong> {{ job.title }}</p>
+                        <p class="mb-1"><strong>Skills:</strong> {{ jobseeker.skills or 'Not specified' }}</p>
+                        <p class="mb-0"><strong>Experience:</strong> {{ jobseeker.years_experience or '0' }} years</p>
+                    </div>
+
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category == 'error' and 'danger' or 'success' }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <!-- Review Form -->
+                    <form method="POST" action="{{ url_for('submit_review_seeker', application_id=application.id) }}" id="reviewForm">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Rating Field -->
+                        <div class="mb-4">
+                            <label for="rating" class="form-label fw-bold">Rating *</label>
+                            <select class="form-select {% if form.rating.errors %}is-invalid{% endif %}" 
+                                    id="rating" name="rating" required>
+                                <option value="">Select a rating</option>
+                                <option value="5" {% if form.rating.data == '5' %}selected{% endif %}>⭐⭐⭐⭐⭐ (5) - Excellent</option>
+                                <option value="4" {% if form.rating.data == '4' %}selected{% endif %}>⭐⭐⭐⭐ (4) - Very Good</option>
+                                <option value="3" {% if form.rating.data == '3' %}selected{% endif %}>⭐⭐⭐ (3) - Good</option>
+                                <option value="2" {% if form.rating.data == '2' %}selected{% endif %}>⭐⭐ (2) - Fair</option>
+                                <option value="1" {% if form.rating.data == '1' %}selected{% endif %}>⭐ (1) - Poor</option>
+                            </select>
+                            {% if form.rating.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.rating.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Comment Field -->
+                        <div class="mb-4">
+                            <label for="comment" class="form-label fw-bold">Review Comment</label>
+                            <textarea class="form-control {% if form.comment.errors %}is-invalid{% endif %}" 
+                                      id="comment" name="comment" rows="4" 
+                                      placeholder="Share your experience working with this job seeker..."
+                                      maxlength="500">{{ form.comment.data or '' }}</textarea>
+                            <div class="form-text">Maximum 500 characters. <span id="charCount">0/500</span></div>
+                            {% if form.comment.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.comment.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn-modern btn-primary-modern flex-fill">
+                                <i class="fas fa-paper-plane me-2"></i>Submit Review
+                            </button>
+                            <a href="{{ url_for('applicants') }}" class="btn-modern btn-outline-modern">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Applicants
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.seeker-info {
+    background: var(--bg-secondary) !important;
+    border-left: 4px solid var(--primary);
+}
+
+.star-rating {
+    font-size: 1.5rem;
+    color: #ffc107;
+}
+
+.form-select:focus,
+.form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+}
+
+#charCount.text-danger {
+    color: var(--danger) !important;
+    font-weight: bold;
+}
+
+
+/* Enhanced Review Form Styling */
+.seeker-info {
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card)) !important;
+    border-left: 4px solid var(--primary) !important;
+    color: var(--text-primary) !important;
+    padding: 1.5rem !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+}
+
+.seeker-info h5 {
+    color: var(--primary) !important;
+    font-weight: 700 !important;
+    margin-bottom: 1rem !important;
+    font-size: 1.25rem !important;
+}
+
+.seeker-info p {
+    color: var(--text-primary) !important;
+    margin-bottom: 0.5rem !important;
+    font-size: 1rem !important;
+}
+
+.seeker-info strong {
+    color: var(--primary) !important;
+    font-weight: 600 !important;
+}
+
+/* Enhanced form styling */
+.form-label {
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    font-size: 1.1rem !important;
+    margin-bottom: 0.75rem !important;
+}
+
+.form-select,
+.form-control {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border: 2px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 1rem !important;
+    transition: all 0.3s ease !important;
+}
+
+.form-select:focus,
+.form-control:focus {
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 0.3rem rgba(67, 97, 238, 0.15) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Star rating enhancement */
+.star-rating-option {
+    background: var(--bg-secondary) !important;
+    border: 2px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+}
+
+.star-rating-option:hover {
+    border-color: var(--primary) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.2) !important;
+}
+
+/* Character count styling */
+#charCount {
+    font-weight: 600 !important;
+    color: var(--text-secondary) !important;
+}
+
+#charCount.text-danger {
+    color: #e53e3e !important;
+    font-weight: 700 !important;
+}
+
+/* Card enhancements */
+.card-modern {
+    border: none !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
+    overflow: hidden !important;
+}
+
+.card-header-modern {
+    background: linear-gradient(135deg, var(--primary), #5a67d8) !important;
+    color: white !important;
+    padding: 1.5rem !important;
+    border-bottom: none !important;
+}
+
+.card-header-modern h4 {
+    color: white !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+}
+
+/* Button enhancements */
+.btn-modern {
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 0.75rem 1.5rem !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    transition: all 0.3s ease !important;
+    text-transform: none !important;
+}
+
+.btn-modern:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(67, 97, 238, 0.3) !important;
+}
+
+.btn-primary-modern {
+    background: linear-gradient(135deg, var(--primary), #5a67d8) !important;
+    color: white !important;
+}
+
+.btn-outline-modern {
+    background: transparent !important;
+    color: var(--primary) !important;
+    border: 2px solid var(--primary) !important;
+}
+
+.btn-outline-modern:hover {
+    background: var(--primary) !important;
+    color: white !important;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .seeker-info {
+        padding: 1rem !important;
+    }
+    
+    .seeker-info h5 {
+        font-size: 1.1rem !important;
+    }
+    
+    .seeker-info p {
+        font-size: 0.9rem !important;
+    }
+    
+    .form-select,
+    .form-control {
+        padding: 0.6rem 0.8rem !important;
+        font-size: 0.9rem !important;
+    }
+}
+
+/* Animation for better UX */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card-modern {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Focus states for accessibility */
+.form-select:focus-visible,
+.form-control:focus-visible,
+.btn-modern:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Selection color */
+::selection {
+    background: rgba(67, 97, 238, 0.2);
+    color: var(--text-primary);
+}
+
+
+
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const commentTextarea = document.getElementById('comment');
+    const charCount = document.getElementById('charCount');
+    
+    // Character count for comment
+    if (commentTextarea && charCount) {
+        commentTextarea.addEventListener('input', function() {
+            const length = this.value.length;
+            charCount.textContent = `${length}/500`;
+            
+            if (length > 450) {
+                charCount.classList.add('text-danger');
+            } else {
+                charCount.classList.remove('text-danger');
+            }
+        });
+        
+        // Initialize character count
+        charCount.textContent = `${commentTextarea.value.length}/500`;
+    }
+    
+    // Form validation
+    const reviewForm = document.getElementById('reviewForm');
+    if (reviewForm) {
+        reviewForm.addEventListener('submit', function(e) {
+            const rating = document.getElementById('rating').value;
+            if (!rating) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Rating Required',
+                    text: 'Please select a rating before submitting your review.',
+                    icon: 'warning',
+                    confirmButtonColor: '#4361ee'
+                });
+            }
+        });
+    }
+    
+    // Star rating interaction (optional enhancement)
+    const ratingSelect = document.getElementById('rating');
+    if (ratingSelect) {
+        ratingSelect.addEventListener('change', function() {
+            // You can add visual feedback here if needed
+            console.log('Rating selected:', this.value);
+        });
+    }
+});
+</script>
+{% endblock %}

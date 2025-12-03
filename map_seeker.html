@@ -1,0 +1,440 @@
+{% extends "base.html" %}
+{% block title %}Find Job Seekers on Map - QuickHire{% endblock %}
+{% block content %}
+<div class="container-fluid py-4 mt-5">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 fw-bold text-gradient mb-2">
+                        <i class="fas fa-map-marked-alt me-2"></i>Find Job Seekers Nearby
+                    </h1>
+                    <p class="text-muted-dark mb-0">Discover skilled workers in your area - Search dynamically without page reloads</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('direct_hire') }}" class="btn-modern btn-outline-modern">
+                        <i class="fas fa-list me-2"></i>List View
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Map Filters Sidebar -->
+        <div class="col-lg-4 col-xl-3">
+            <div class="card-modern">
+                <div class="card-header-modern">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-filter me-2"></i>Map Filters
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="mapFilterForm">
+                        <!-- Location Input -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Your Location</label>
+                            <div class="input-group">
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="locationInput"
+                                       name="location" 
+                                       placeholder="Enter your location..."
+                                       value="{{ request.args.get('location', '') }}"
+                                       required>
+                                <button type="button" 
+                                        class="btn btn-outline-primary" 
+                                        id="getCurrentLocation">
+                                    <i class="fas fa-location-arrow"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">Enter location or use current location</div>
+                        </div>
+
+                        <!-- Radius Filter -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Search Radius</label>
+                            <select class="form-select" name="radius" id="radiusSelect">
+                                <option value="5" {% if request.args.get('radius', '25') == '5' %}selected{% endif %}>5 km</option>
+                                <option value="10" {% if request.args.get('radius', '25') == '10' %}selected{% endif %}>10 km</option>
+                                <option value="25" {% if request.args.get('radius', '25') == '25' %}selected{% endif %}>25 km</option>
+                                <option value="50" {% if request.args.get('radius', '25') == '50' %}selected{% endif %}>50 km</option>
+                                <option value="100" {% if request.args.get('radius', '25') == '100' %}selected{% endif %}>100 km</option>
+                            </select>
+                        </div>
+
+                        <!-- Skill Filter -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Filter by Skill</label>
+                            <select class="form-select" name="skill" id="skillSelect">
+                                <option value="">All Skills</option>
+                                <option value="Cooking" {% if skill_filter == 'Cooking' %}selected{% endif %}>Cooking</option>
+                                <option value="Washing" {% if skill_filter == 'Washing' %}selected{% endif %}>Washing</option>
+                                <option value="Babysitting" {% if skill_filter == 'Babysitting' %}selected{% endif %}>Babysitting</option>
+                                <option value="Cleaning" {% if skill_filter == 'Cleaning' %}selected{% endif %}>Cleaning</option>
+                                <option value="Driving" {% if skill_filter == 'Driving' %}selected{% endif %}>Driving</option>
+                                <option value="Other" {% if skill_filter == 'Other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+
+                        <!-- Hidden coordinates -->
+                        <input type="hidden" name="lat" id="hiddenLat" value="{{ request.args.get('lat', '') }}">
+                        <input type="hidden" name="lng" id="hiddenLng" value="{{ request.args.get('lng', '') }}">
+
+                        <button type="submit" class="btn-modern btn-primary-modern w-100" id="searchButton">
+                            <i class="fas fa-search me-2"></i>Search on Map
+                        </button>
+                    </form>
+
+                    <!-- Dynamic Location Info -->
+                    <div class="location-info mt-3">
+                        {% if user_lat and user_lng %}
+                        <div class="p-3 bg-success bg-opacity-10 rounded">
+                            <small class="text-success">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Searching within {{ radius }} km of your location
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Job Seekers List -->
+            <div class="card-modern mt-4">
+                <div class="card-header-modern">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-list me-2"></i>Seekers ({{ seekers|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="seekers-list" id="seekersList" style="max-height: 500px; overflow-y: auto;">
+                        {% for seeker in seekers %}
+                        <div class="seeker-item mb-3 p-3 border rounded" 
+                             data-seeker-id="{{ seeker.id }}"
+                             data-lat="{{ seeker.latitude }}" 
+                             data-lng="{{ seeker.longitude }}">
+                            <h6 class="fw-bold mb-1">{{ seeker.jobseeker_name }}</h6>
+                            <p class="small text-muted mb-1">
+                                <i class="fas fa-tools me-1"></i>{{ seeker.skills or 'No skills specified' }}
+                            </p>
+                            <p class="small text-muted mb-1">
+                                <i class="fas fa-map-marker-alt me-1"></i>{{ seeker.location }}
+                            </p>
+                            {% if seeker.years_experience %}
+                            <p class="small text-muted mb-2">
+                                <i class="fas fa-briefcase me-1"></i>{{ seeker.years_experience }} years experience
+                            </p>
+                            {% endif %}
+                            {% if seeker.distance is not none %}
+                            <span class="badge bg-primary">
+                                {{ "%.1f"|format(seeker.distance) }} km away
+                            </span>
+                            {% endif %}
+                            <div class="mt-2">
+                                <a href="{{ url_for('start_chat', jobseeker_id=seeker.id) }}" 
+                                   class="btn-modern btn-primary-modern btn-sm">
+                                    <i class="fas fa-comment me-1"></i>Chat
+                                </a>
+                                {% if hired_seeker_ids and seeker.id not in hired_seeker_ids %}
+                                <button class="btn-modern btn-success-modern btn-sm hire-btn"
+                                        data-seeker-id="{{ seeker.id }}"
+                                        data-seeker-name="{{ seeker.jobseeker_name }}">
+                                    <i class="fas fa-user-check me-1"></i>Hire
+                                </button>
+                                {% else %}
+                                <span class="badge bg-success">Hired</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-users fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No job seekers found in this area</p>
+                            {% if not user_lat or not user_lng %}
+                            <p class="text-muted small">Enter your location to see nearby seekers</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map Container -->
+        <div class="col-lg-8 col-xl-9">
+            <div class="card-modern h-100">
+                <div class="card-header-modern d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-map me-2"></i>Interactive Map
+                        <small class="text-white-50 ms-2">Dynamic search - No page reloads</small>
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-light btn-sm" onclick="locateUser()" id="sidebarLocationBtn">
+                            <i class="fas fa-bolt me-1"></i>Instant Location
+                        </button>
+                        <button class="btn btn-light btn-sm" onclick="resetMap()">
+                            <i class="fas fa-sync me-1"></i>Reset View
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0 position-relative">
+                    <div id="map" style="height: 600px; width: 100%; border-radius: 0 0 var(--radius-lg) var(--radius-lg);"></div>
+                    <!-- Map loading overlay - Initially hidden -->
+                    <div id="mapLoadingOverlay" class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-75" style="display: none; z-index: 1000; border-radius: 0 0 var(--radius-lg) var(--radius-lg);">
+                        <!-- Content will be dynamically set by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Map Configuration -->
+<script>
+// Map configuration - SIMPLIFIED like the working job seeker map
+const MAP_CONFIG = {
+    provider: "{{ map_provider }}",
+    mapboxToken: "{{ mapbox_token or '' }}",
+    googleMapsKey: "{{ google_maps_key or '' }}",
+    userLat: {{ user_lat or 'null' }},
+    userLng: {{ user_lng or 'null' }},
+    radius: {{ radius or 25 }},
+    seekers: [
+        {% for seeker in seekers %}
+        {
+            id: {{ seeker.id }},
+            name: "{{ seeker.jobseeker_name|escapejs }}",
+            skills: "{{ (seeker.skills or 'No skills specified')|escapejs }}",
+            location: "{{ seeker.location|escapejs }}",
+            experience: {{ seeker.years_experience or 0 }},
+            lat: {{ seeker.latitude }},
+            lng: {{ seeker.longitude }},
+            distance: {{ seeker.distance or 'null' }},
+            chatUrl: "{{ url_for('start_chat', jobseeker_id=seeker.id) }}",
+            isHired: {{ 'true' if hired_seeker_ids and seeker.id in hired_seeker_ids else 'false' }}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ]
+};
+</script>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<!-- Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Map Initialization Script -->
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+
+<style>
+.seeker-item {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color) !important;
+}
+
+.seeker-item:hover {
+    border-color: var(--primary) !important;
+    transform: translateX(2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.seeker-item.active {
+    border-color: var(--primary) !important;
+    background: rgba(67, 97, 238, 0.05);
+    box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.1);
+}
+
+/* Map container responsive adjustments */
+@media (max-width: 768px) {
+    #map {
+        height: 400px !important;
+    }
+    
+    .col-lg-4 {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Dark mode map adjustments */
+[data-theme="dark"] .leaflet-container {
+    background: var(--gray-800);
+}
+
+[data-theme="dark"] .leaflet-popup-content {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .leaflet-control-attribution {
+    background: rgba(0, 0, 0, 0.7) !important;
+    color: var(--text-secondary);
+}
+
+/* Custom scrollbar for seekers list */
+.seekers-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.seekers-list::-webkit-scrollbar-track {
+    background: var(--gray-100);
+    border-radius: 3px;
+}
+
+[data-theme="dark"] .seekers-list::-webkit-scrollbar-track {
+    background: var(--gray-700);
+}
+
+.seekers-list::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 3px;
+}
+
+.seekers-list::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
+}
+
+/* Search loading state */
+.search-loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* Smooth transitions */
+.leaflet-marker-icon {
+    transition: transform 0.3s ease;
+}
+
+.leaflet-marker-icon:hover {
+    transform: scale(1.1);
+}
+
+/* Hire button styles */
+.hire-btn {
+    transition: all 0.3s ease;
+}
+
+.hire-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* Ensure map container is always visible */
+#map {
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: 600px !important;
+    width: 100% !important;
+    min-height: 400px;
+    background: var(--gray-100);
+}
+
+[data-theme="dark"] #map {
+    background: var(--gray-800);
+}
+
+/* Force map container to be visible during loading */
+#map.leaflet-container {
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 1;
+}
+
+/* Loading state improvements */
+#mapLoadingOverlay {
+    background: rgba(0, 0, 0, 0.7) !important;
+    z-index: 1000;
+}
+
+/* Ensure map controls are visible */
+.leaflet-control-container {
+    z-index: 1000;
+}
+
+.leaflet-top, .leaflet-bottom {
+    z-index: 1000;
+}
+
+/* Marker styling consistency */
+.user-location-marker {
+    z-index: 1000;
+}
+
+.result-marker {
+    z-index: 500;
+}
+</style>
+
+<script>
+// Simple initialization like the working job seeker map
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing employer map...');
+    
+    // Initialize map after a short delay to ensure DOM is ready
+    setTimeout(() => {
+        if (typeof MAP_CONFIG !== 'undefined' && typeof QuickHireMap !== 'undefined') {
+            try {
+                window.quickHireMap = new QuickHireMap(MAP_CONFIG);
+                console.log('Employer map initialized successfully');
+                
+                // Ensure map tiles load properly
+                setTimeout(() => {
+                    if (window.quickHireMap && window.quickHireMap.map) {
+                        window.quickHireMap.map.invalidateSize();
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Employer map initialization failed:', error);
+                // Simple fallback: try basic Leaflet
+                initializeBasicMap();
+            }
+        } else {
+            console.error('MAP_CONFIG or QuickHireMap not available');
+            initializeBasicMap();
+        }
+    }, 500);
+});
+
+// Simple fallback map initialization
+function initializeBasicMap() {
+    const mapContainer = document.getElementById('map');
+    if (!mapContainer) return;
+    
+    try {
+        const defaultLat = MAP_CONFIG?.userLat || 20.5937;
+        const defaultLng = MAP_CONFIG?.userLng || 78.9629;
+        const defaultZoom = MAP_CONFIG?.userLat ? 12 : 5;
+        
+        const map = L.map('map').setView([defaultLat, defaultLng], defaultZoom);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 18
+        }).addTo(map);
+        
+        // Add basic controls
+        L.control.scale({ imperial: false }).addTo(map);
+        
+        console.log('Basic map initialized successfully');
+        
+    } catch (error) {
+        console.error('Basic map initialization failed:', error);
+    }
+}
+
+// Global functions for employer map
+function locateUser() {
+    if (window.quickHireMap) {
+        window.quickHireMap.locateUser();
+    }
+}
+
+function resetMap() {
+    if (window.quickHireMap) {
+        window.quickHireMap.resetMap();
+    }
+}
+</script>
+{% endblock %}

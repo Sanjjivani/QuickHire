@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% block title %}Find Jobs on Map - QuickHire{% endblock %}
+{% block content %}
+<div class="container-fluid py-4 mt-5">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 fw-bold text-gradient mb-2">
+                        <i class="fas fa-map-marked-alt me-2"></i>Find Jobs Nearby
+                    </h1>
+                    <p class="text-muted-dark mb-0">Discover job opportunities in your area - Search dynamically without page reloads</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('jobs') }}" class="btn-modern btn-outline-modern">
+                        <i class="fas fa-list me-2"></i>List View
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Map Filters Sidebar -->
+        <div class="col-lg-4 col-xl-3">
+            <div class="card-modern">
+                <div class="card-header-modern">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-filter me-2"></i>Map Filters
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="mapFilterForm">
+                        <!-- Location Input -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Your Location</label>
+                            <div class="input-group">
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="locationInput"
+                                       name="location" 
+                                       placeholder="Enter your location..."
+                                       value="{{ request.args.get('location', '') }}"
+                                       required>
+                                <button type="button" 
+                                        class="btn btn-outline-primary" 
+                                        id="getCurrentLocation">
+                                    <i class="fas fa-location-arrow"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">Enter location or use current location</div>
+                        </div>
+
+                        <!-- Radius Filter -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Search Radius</label>
+                            <select class="form-select" name="radius" id="radiusSelect">
+                                <option value="5" {% if request.args.get('radius', '25') == '5' %}selected{% endif %}>5 km</option>
+                                <option value="10" {% if request.args.get('radius', '25') == '10' %}selected{% endif %}>10 km</option>
+                                <option value="25" {% if request.args.get('radius', '25') == '25' %}selected{% endif %}>25 km</option>
+                                <option value="50" {% if request.args.get('radius', '25') == '50' %}selected{% endif %}>50 km</option>
+                                <option value="100" {% if request.args.get('radius', '25') == '100' %}selected{% endif %}>100 km</option>
+                            </select>
+                        </div>
+
+                        <!-- Skill Filter -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Filter by Skill</label>
+                            <select class="form-select" name="skill" id="skillSelect">
+                                <option value="">All Skills</option>
+                                <option value="Cooking" {% if skill_filter == 'Cooking' %}selected{% endif %}>Cooking</option>
+                                <option value="Washing" {% if skill_filter == 'Washing' %}selected{% endif %}>Washing</option>
+                                <option value="Babysitting" {% if skill_filter == 'Babysitting' %}selected{% endif %}>Babysitting</option>
+                                <option value="Cleaning" {% if skill_filter == 'Cleaning' %}selected{% endif %}>Cleaning</option>
+                                <option value="Driving" {% if skill_filter == 'Driving' %}selected{% endif %}>Driving</option>
+                                <option value="Other" {% if skill_filter == 'Other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+
+                        <!-- Hidden coordinates -->
+                        <input type="hidden" name="lat" id="hiddenLat" value="{{ request.args.get('lat', '') }}">
+                        <input type="hidden" name="lng" id="hiddenLng" value="{{ request.args.get('lng', '') }}">
+
+                        <button type="submit" class="btn-modern btn-primary-modern w-100" id="searchButton">
+                            <i class="fas fa-search me-2"></i>Search on Map
+                        </button>
+                    </form>
+
+                    <!-- Dynamic Location Info -->
+                    <div class="location-info mt-3">
+                        {% if user_lat and user_lng %}
+                        <div class="p-3 bg-success bg-opacity-10 rounded">
+                            <small class="text-success">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Searching within {{ radius }} km of your location
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Jobs List -->
+            <div class="card-modern mt-4">
+                <div class="card-header-modern">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-list me-2"></i>Jobs ({{ jobs|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="jobs-list" id="jobsList" style="max-height: 500px; overflow-y: auto;">
+                        {% for job in jobs %}
+                        <div class="job-item mb-3 p-3 border rounded" 
+                             data-job-id="{{ job.id }}"
+                             data-lat="{{ job.latitude }}" 
+                             data-lng="{{ job.longitude }}">
+                            <h6 class="fw-bold mb-1">{{ job.title }}</h6>
+                            <p class="small text-muted mb-1">
+                                <i class="fas fa-building me-1"></i>{{ job.employer.employer_name }}
+                            </p>
+                            <p class="small text-muted mb-1">
+                                <i class="fas fa-map-marker-alt me-1"></i>{{ job.location }}
+                            </p>
+                            <p class="small text-muted mb-2">
+                                <i class="fas fa-rupee-sign me-1"></i>₹{{ "%.0f"|format(job.pay) }}
+                            </p>
+                            {% if job.distance is not none %}
+                            <span class="badge bg-primary">
+                                {{ "%.1f"|format(job.distance) }} km away
+                            </span>
+                            {% endif %}
+                            <div class="mt-2">
+                                <a href="{{ url_for('apply_job', job_id=job.id) }}" 
+                                   class="btn-modern btn-primary-modern btn-sm">
+                                    Apply Now
+                                </a>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-map-marker-alt fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No jobs found in this area</p>
+                            {% if not user_lat or not user_lng %}
+                            <p class="text-muted small">Enter your location to see nearby jobs</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map Container -->
+        <div class="col-lg-8 col-xl-9">
+            <div class="card-modern h-100">
+                <div class="card-header-modern d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-map me-2"></i>Interactive Map
+                        <small class="text-white-50 ms-2">Dynamic search - No page reloads</small>
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-light btn-sm" onclick="locateUser()" id="sidebarLocationBtn">
+                            <i class="fas fa-bolt me-1"></i>Instant Location
+                        </button>
+                        <button class="btn btn-light btn-sm" onclick="resetMap()">
+                            <i class="fas fa-sync me-1"></i>Reset View
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0 position-relative">
+                    <div id="map" style="height: 600px; width: 100%; border-radius: 0 0 var(--radius-lg) var(--radius-lg);"></div>
+                    <!-- Map loading overlay - Initially hidden -->
+                    <div id="mapLoadingOverlay" class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-75" style="display: none; z-index: 1000; border-radius: 0 0 var(--radius-lg) var(--radius-lg);">
+                        <!-- Content will be dynamically set by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Map Configuration -->
+<script>
+// Map configuration
+const MAP_CONFIG = {
+    provider: "{{ map_provider }}",
+    mapboxToken: "{{ mapbox_token or '' }}",
+    googleMapsKey: "{{ google_maps_key or '' }}",
+    userLat: {{ user_lat or 'null' }},
+    userLng: {{ user_lng or 'null' }},
+    radius: {{ radius or 25 }},
+    jobs: [
+        {% for job in jobs %}
+        {
+            id: {{ job.id }},
+            title: "{{ job.title|escapejs }}",
+            employer: "{{ job.employer.employer_name|escapejs }}",
+            location: "{{ job.location|escapejs }}",
+            pay: {{ job.pay }},
+            skills: "{{ job.required_skills|escapejs }}",
+            lat: {{ job.latitude }},
+            lng: {{ job.longitude }},
+            distance: {{ job.distance or 'null' }},
+            applyUrl: "{{ url_for('apply_job', job_id=job.id) }}"
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ]
+};
+</script>
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<!-- Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Map Initialization Script -->
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+
+<style>
+.job-item {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color) !important;
+}
+
+.job-item:hover {
+    border-color: var(--primary) !important;
+    transform: translateX(2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.job-item.active {
+    border-color: var(--primary) !important;
+    background: rgba(67, 97, 238, 0.05);
+    box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.1);
+}
+
+/* Map container responsive adjustments */
+@media (max-width: 768px) {
+    #map {
+        height: 400px !important;
+    }
+    
+    .col-lg-4 {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Dark mode map adjustments */
+[data-theme="dark"] .leaflet-container {
+    background: var(--gray-800);
+}
+
+[data-theme="dark"] .leaflet-popup-content {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .leaflet-control-attribution {
+    background: rgba(0, 0, 0, 0.7) !important;
+    color: var(--text-secondary);
+}
+
+/* Custom scrollbar for jobs list */
+.jobs-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.jobs-list::-webkit-scrollbar-track {
+    background: var(--gray-100);
+    border-radius: 3px;
+}
+
+[data-theme="dark"] .jobs-list::-webkit-scrollbar-track {
+    background: var(--gray-700);
+}
+
+.jobs-list::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 3px;
+}
+
+.jobs-list::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
+}
+
+/* Search loading state */
+.search-loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* Smooth transitions */
+.leaflet-marker-icon {
+    transition: transform 0.3s ease;
+}
+
+.leaflet-marker-icon:hover {
+    transform: scale(1.1);
+}
+</style>
+{% endblock %}

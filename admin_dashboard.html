@@ -1,0 +1,636 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard - QuickHire{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-6 fw-bold text-gradient mb-2">
+                        <i class="fas fa-user-shield me-3"></i>Admin Dashboard
+                    </h1>
+                    <p class="text-muted mb-0">Manage job seekers, employers, and platform activities</p>
+                </div>
+                <div class="text-end">
+                    <div class="d-flex gap-2 align-items-center">
+                        <span class="badge-modern badge-primary-modern">
+                            <i class="fas fa-circle text-success me-1"></i>
+                            Admin Mode
+                        </span>
+                        <a href="{{ url_for('admin_logout') }}" class="btn-modern btn-outline-modern btn-sm">
+                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category == 'error' and 'danger' or 'success' }} alert-modern mb-4" role="alert">
+                    <i class="fas fa-{{ category == 'error' and 'exclamation-triangle' or 'check-circle' }} me-2"></i>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-xl-3 col-md-6">
+            <div class="card-modern stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon me-3">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h3 class="stat-number text-primary">{{ job_seekers|length }}</h3>
+                            <p class="stat-label text-muted mb-0">Total Job Seekers</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card-modern stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon me-3">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h3 class="stat-number text-success">{{ employers|length }}</h3>
+                            <p class="stat-label text-muted mb-0">Total Employers</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card-modern stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon me-3">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h3 class="stat-number text-info">{{ total_jobs }}</h3>
+                            <p class="stat-label text-muted mb-0">Total Jobs</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card-modern stat-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon me-3">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h3 class="stat-number text-warning">{{ job_seekers|length + employers|length }}</h3>
+                            <p class="stat-label text-muted mb-0">Total Users</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Sections -->
+    <div class="row g-4">
+        <!-- Job Seekers Section -->
+        <div class="col-xl-6">
+            <div class="card-modern h-100">
+                <div class="card-header-modern d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0">
+                            <i class="fas fa-users me-2"></i>Job Seekers
+                        </h4>
+                        <small class="text-white-50">{{ job_seekers|length }} registered seekers</small>
+                    </div>
+                    <span class="badge bg-white text-primary">{{ job_seekers|length }}</span>
+                </div>
+                <div class="card-body">
+                    {% if job_seekers %}
+                        <div class="table-responsive">
+                            <table class="table table-modern table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-4">
+                                            <i class="fas fa-user me-2"></i>Name
+                                        </th>
+                                        <th>
+                                            <i class="fas fa-envelope me-2"></i>Email
+                                        </th>
+                                        <th>
+                                            <i class="fas fa-tools me-2"></i>Skills
+                                        </th>
+                                        <th class="text-end pe-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for seeker in job_seekers %}
+                                    <tr class="user-row" id="seeker-{{ seeker.id }}">
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center">
+                                                <div class="user-avatar me-3">
+                                                    <i class="fas fa-user-circle"></i>
+                                                </div>
+                                                <div>
+                                                    <strong class="text-primary">{{ seeker.jobseeker_name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-map-marker-alt me-1"></i>
+                                                        {{ seeker.location }}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if seeker.email %}
+                                                <span class="text-break">{{ seeker.email }}</span>
+                                            {% else %}
+                                                <span class="text-muted">Not provided</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if seeker.skills %}
+                                                <span class="badge-modern badge-primary-modern">
+                                                    {{ seeker.skills }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">No skills listed</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end pe-4">
+                                            <button type="button" class="btn-modern btn-danger btn-sm" 
+                                                    onclick="confirmDelete('jobseeker', {{ seeker.id }}, '{{ seeker.jobseeker_name }}')"
+                                                    data-bs-toggle="tooltip" title="Delete Job Seeker">
+                                                <i class="fas fa-trash me-1"></i>Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="empty-state">
+                                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No Job Seekers Found</h5>
+                                <p class="text-muted mb-0">No job seekers have registered on the platform yet.</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Employers Section -->
+        <div class="col-xl-6">
+            <div class="card-modern h-100">
+                <div class="card-header-modern d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0">
+                            <i class="fas fa-user-tie me-2"></i>Employers
+                        </h4>
+                        <small class="text-white-50">{{ employers|length }} registered employers</small>
+                    </div>
+                    <span class="badge bg-white text-success">{{ employers|length }}</span>
+                </div>
+                <div class="card-body">
+                    {% if employers %}
+                        <div class="table-responsive">
+                            <table class="table table-modern table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-4">
+                                            <i class="fas fa-building me-2"></i>Employer
+                                        </th>
+                                        <th>
+                                            <i class="fas fa-landmark me-2"></i>Company
+                                        </th>
+                                        <th>
+                                            <i class="fas fa-envelope me-2"></i>Email
+                                        </th>
+                                        <th class="text-end pe-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for employer in employers %}
+                                    <tr class="user-row" id="employer-{{ employer.id }}">
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center">
+                                                <div class="user-avatar me-3">
+                                                    <i class="fas fa-user-tie"></i>
+                                                </div>
+                                                <div>
+                                                    <strong class="text-success">{{ employer.employer_name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-map-marker-alt me-1"></i>
+                                                        {{ employer.location }}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if employer.company_name %}
+                                                <span class="text-break">{{ employer.company_name }}</span>
+                                            {% else %}
+                                                <span class="text-muted">Individual</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="text-break">{{ employer.email }}</span>
+                                        </td>
+                                        <td class="text-end pe-4">
+                                            <button type="button" class="btn-modern btn-danger btn-sm"
+                                                    onclick="confirmDelete('employer', {{ employer.id }}, '{{ employer.employer_name }}')"
+                                                    data-bs-toggle="tooltip" title="Delete Employer">
+                                                <i class="fas fa-trash me-1"></i>Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="empty-state">
+                                <i class="fas fa-user-tie fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No Employers Found</h5>
+                                <p class="text-muted mb-0">No employers have registered on the platform yet.</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card-modern">
+                <div class="card-body">
+                    <h5 class="mb-3">
+                        <i class="fas fa-bolt me-2 text-warning"></i>Quick Actions
+                    </h5>
+                    <div class="d-flex gap-3 flex-wrap">
+                        <a href="{{ url_for('index') }}" class="btn-modern btn-outline-modern">
+                            <i class="fas fa-home me-2"></i>Back to Home
+                        </a>
+                        <a href="{{ url_for('jobs') }}" class="btn-modern btn-outline-modern">
+                            <i class="fas fa-briefcase me-2"></i>View Job Listings
+                        </a>
+                        <button class="btn-modern btn-outline-modern" onclick="location.reload()">
+                            <i class="fas fa-sync-alt me-2"></i>Refresh Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SweetAlert2 Delete Confirmation Script -->
+<script>
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+});
+
+function confirmDelete(userType, userId, userName) {
+    const isJobSeeker = userType === 'jobseeker';
+    const userTypeText = isJobSeeker ? 'Job Seeker' : 'Employer';
+    const userIcon = isJobSeeker ? 'fas fa-users' : 'fas fa-user-tie';
+    
+    Swal.fire({
+        title: 'Delete User?',
+        html: `
+            <div class="text-center">
+                <div class="delete-icon mb-3">
+                    <i class="${userIcon} fa-3x text-danger"></i>
+                </div>
+                <h5 class="text-danger mb-2">Warning: This action cannot be undone!</h5>
+                <p class="mb-0">You are about to delete <strong class="text-primary">${userName}</strong></p>
+                <p class="text-muted">This will permanently remove all associated data.</p>
+            </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Delete User',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#ef476f',
+        cancelButtonColor: '#4361ee',
+        background: getComputedStyle(document.body).getPropertyValue('--bg-card'),
+        color: getComputedStyle(document.body).getPropertyValue('--text-primary'),
+        customClass: {
+            popup: 'swal2-popup-custom',
+            title: 'swal2-title-custom',
+            htmlContainer: 'swal2-html-container-custom'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            deleteUser(userType, userId, userName);
+        }
+    });
+}
+
+function deleteUser(userType, userId, userName) {
+    const url = userType === 'jobseeker' 
+        ? `/admin/delete/jobseeker/${userId}`
+        : `/admin/delete/employer/${userId}`;
+    
+    // Show loading state
+    Swal.fire({
+        title: 'Deleting User...',
+        html: `
+            <div class="text-center">
+                <div class="loading-spinner mb-3"></div>
+                <p>Removing ${userName} from the system</p>
+            </div>
+        `,
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        background: getComputedStyle(document.body).getPropertyValue('--bg-card'),
+        color: getComputedStyle(document.body).getPropertyValue('--text-primary')
+    });
+    
+    // Send delete request
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove row from table with animation
+            const row = document.getElementById(`${userType}-${userId}`);
+            if (row) {
+                row.style.transition = 'all 0.4s ease';
+                row.style.opacity = '0';
+                row.style.transform = 'translateX(-100px)';
+                row.style.height = '0';
+                row.style.overflow = 'hidden';
+                
+                setTimeout(() => {
+                    row.remove();
+                    showSuccessToast(`${userType === 'jobseeker' ? 'Job Seeker' : 'Employer'} "${userName}" deleted successfully!`);
+                    updateStatistics();
+                }, 400);
+            }
+            
+            Swal.fire({
+                title: 'Success!',
+                html: `
+                    <div class="text-center">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h5 class="text-success">User Deleted</h5>
+                        <p class="mb-0">${userType === 'jobseeker' ? 'Job Seeker' : 'Employer'} <strong>${userName}</strong> has been permanently removed.</p>
+                    </div>
+                `,
+                icon: 'success',
+                confirmButtonColor: '#4361ee',
+                background: getComputedStyle(document.body).getPropertyValue('--bg-card'),
+                color: getComputedStyle(document.body).getPropertyValue('--text-primary')
+            });
+        } else {
+            throw new Error(data.message || 'Failed to delete user');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+            title: 'Error!',
+            html: `
+                <div class="text-center">
+                    <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                    <h5 class="text-danger">Deletion Failed</h5>
+                    <p class="mb-0">Failed to delete user: ${error.message}</p>
+                </div>
+            `,
+            icon: 'error',
+            confirmButtonColor: '#4361ee',
+            background: getComputedStyle(document.body).getPropertyValue('--bg-card'),
+            color: getComputedStyle(document.body).getPropertyValue('--text-primary')
+        });
+    });
+}
+
+function showSuccessToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'alert alert-success alert-modern position-fixed';
+    toast.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        box-shadow: var(--shadow-lg);
+        border-radius: var(--radius-lg);
+    `;
+    toast.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-check-circle me-2"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.style.transition = 'all 0.3s ease';
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100px)';
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 4000);
+}
+
+function updateStatistics() {
+    // Update statistics cards
+    const jobSeekerCount = document.querySelectorAll('#job-seekers-table tbody tr:not([style*="opacity: 0"])').length;
+    const employerCount = document.querySelectorAll('#employers-table tbody tr:not([style*="opacity: 0"])').length;
+    
+    // Update the statistics numbers if needed
+    console.log(`Updated stats: ${jobSeekerCount} job seekers, ${employerCount} employers`);
+}
+</script>
+
+<style>
+/* Admin Dashboard Specific Styles */
+.stat-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--primary);
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.table-modern {
+    margin-bottom: 0;
+}
+
+.table-modern thead th {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-color);
+    padding: 1rem 0.75rem;
+}
+
+.table-modern tbody td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+    border-color: var(--border-color);
+}
+
+.user-row {
+    transition: all 0.3s ease;
+}
+
+.user-row:hover {
+    background: rgba(67, 97, 238, 0.05) !important;
+    transform: scale(1.01);
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    background: var(--bg-secondary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 1.25rem;
+}
+
+.empty-state {
+    padding: 2rem 1rem;
+}
+
+.delete-icon {
+    color: var(--danger);
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-color);
+    border-left: 4px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Dark mode specific adjustments */
+[data-theme="dark"] .table-modern thead th {
+    background: var(--gray-800);
+    color: var(--gray-100);
+}
+
+[data-theme="dark"] .table-modern tbody tr {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .table-modern tbody tr:hover {
+    background: rgba(67, 97, 238, 0.1) !important;
+}
+
+[data-theme="dark"] .stat-card {
+    background: var(--bg-card);
+    border-left-color: var(--primary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .user-avatar {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+    }
+    
+    .btn-modern.btn-sm {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.8rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    .btn-modern,
+    .card-header-modern .badge {
+        display: none !important;
+    }
+    
+    .card-modern {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+    }
+}
+</style>
+{% endblock %}
