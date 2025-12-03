@@ -7,7 +7,12 @@ Job Seekers: Browse jobs, apply, chat with employers, manage profiles
 
 Employers: Post jobs, browse candidates, direct hiring, manage applications
 
-🎯 Core Features
+
+===============================================================================
+
+🎯 Core Features:
+
+
 ✅ Modern UI/UX with dark/light theme support
 
 ✅ Real-time chat system between employers and job seekers
@@ -26,7 +31,10 @@ Employers: Post jobs, browse candidates, direct hiring, manage applications
 
 ✅ Skill-based matching system
 
-🛠️ Technical Features
+=====================================================================================
+
+🛠️ Technical Features:
+
 Role-based authentication and authorization
 
 Session management with Flask-Login
@@ -41,7 +49,8 @@ Email notifications system
 
 Admin panel for system management
 
-png
+==================================================================================
+
 🏗️ Architecture
 Tech Stack
 Frontend:
@@ -72,44 +81,17 @@ Flask-WTF for forms
 
 Flask-Migrate for database migrations
 
-Database:
+Database: mysql 
 
-mysql 
+=========================================================================================
 
-quickhire/
-├── app/
-│   ├── __init__.py
-│   ├── models.py          # Database models
-│   ├── routes.py          # Application routes
-│   ├── forms.py           # WTForms definitions
-│   ├── utils.py           # Utility functions
-│   └── config.py          # Configuration
-├── migrations/            # Database migrations
-├── static/
-│   ├── css/
-│   │   └── style.css     # Custom styles
-│   ├── js/
-│   │   └── custom.js     # Custom scripts
-│   └── images/           # Static images
-├── templates/
-│   ├── base.html         # Base template
-│   ├── employer_profile.html
-│   ├── employer_dashboard.html
-│   ├── profile.html
-│   ├── jobs.html
-│   ├── chat.html
-│   └── admin/
-├── requirements.txt       # Python dependencies
-├── config.py             # Configuration file
-├── run.py                # Application entry point
-└── README.md             # This file
 
 🚀 Quick Start
 Installation
 Clone the repository
 
 bash
-git clone https://github.com/sanjivani/quickhire.git
+https://github.com/Sanjjivani/QuickHire.git
 cd quickhire
 Create a virtual environment
 
