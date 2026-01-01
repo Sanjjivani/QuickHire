@@ -1,133 +1,127 @@
-# QuickHire
-QuickHire is a modern, full-featured job portal platform that connects job seekers with employers through an intuitive, feature-rich interface with real-time communication capabilities.
+🔐 QuickHire – Secure Recruitment Management Application
 
-✨ Features
-👥 Dual-Role Platform
-Job Seekers: Browse jobs, apply, chat with employers, manage profiles
+(Cybersecurity Learning Project)
 
-Employers: Post jobs, browse candidates, direct hiring, manage applications
+QuickHire is a recruitment-focused web application developed as a hands-on cybersecurity learning project.
 
+The primary purpose of this project is to understand how real-world hiring platforms handle user data, including form submissions, authentication, session management, and data flow, from a web security and penetration testing perspective.
 
-===============================================================================
+This application simulates common recruitment workflows while acting as a safe practice environment to analyse input handling, validation gaps, and potential security weaknesses in user-driven systems.
 
-🎯 Core Features:
+🎯 Project Objectives (Security-Focused)
 
+This project was built with the following cybersecurity learning goals:
 
-✅ Modern UI/UX with dark/light theme support
+Understand recruitment application workflows
 
-✅ Real-time chat system between employers and job seekers
+Analyse form-based user input handling
 
-✅ Interactive maps for location-based job/candidate search
+Study authentication and session management
 
-✅ Comprehensive dashboards with analytics
+Identify common security risks in hiring platforms
 
-✅ Review & rating system for both parties
+Practise manual web application security testing
 
-✅ Responsive design for all device sizes
+Map findings to the OWASP Top 10
 
-✅ Direct hiring without job postings
+🚀 Core Features
+👤 User & Recruiter Workflows
 
-✅ Application tracking with status updates
+User registration and login functionality
 
-✅ Skill-based matching system
+Candidate job application submission
 
-=====================================================================================
+Recruiter-style data viewing (learning-focused)
 
-🛠️ Technical Features:
+Role-based flow understanding (basic)
 
-Role-based authentication and authorization
+📄 Form Handling
 
-Session management with Flask-Login
+Job application and candidate data forms
 
-Database ORM with SQLAlchemy
+Multiple user-input fields for testing
 
-Real-time updates with WebSocket-like features
+Designed to practise:
 
-File upload capabilities
+Input validation testing
 
-Email notifications system
+Sanitisation checks
 
-Admin panel for system management
+Payload injection analysis
 
-==================================================================================
+🧭 Application Flow
 
-🏗️ Architecture
-Tech Stack
-Frontend:
+Multi-page navigation
 
-HTML5, CSS3, JavaScript (ES6+)
+Clear request–response data flow
 
-Bootstrap 5.3 for responsive design
+Client-side vs server-side interaction analysis
 
-Jinja2 templating engine
+Ideal for DOM inspection and form testing
 
-Font Awesome 6 for icons
+🔐 Security Learning Scope
 
-Chart.js for data visualization
+This project is intentionally used to practise and understand:
 
-SweetAlert2 for notifications
+Input validation and output rendering
 
-Backend:
+Form-based attack surfaces
 
-Python 3.8+
+Authentication and authorisation logic
 
-Flask 2.3+ web framework
+Trust boundaries between client and server
 
-SQLAlchemy ORM
+Common vulnerabilities, including:
 
-Flask-Login for authentication
+Cross-Site Scripting (XSS)
 
-Flask-WTF for forms
+Insecure input handling
 
-Flask-Migrate for database migrations
+Broken access control (learning scenarios)
 
-Database: mysql 
+Mapping application behaviour to OWASP Top 10
 
-=========================================================================================
+⚠️ Educational Purpose Only
+This application is developed strictly for ethical learning and cybersecurity practice.
+It is not intended for production use.
 
+🛠 Tech Stack
 
-🚀 Quick Start
-Installation
-Clone the repository
+Frontend: HTML, CSS, JavaScript
 
-bash
-https://github.com/Sanjjivani/QuickHire.git
+Backend: Python (Flask) / Node.js (as implemented)
+
+Database: Local development database
+
+Environment: Local testing environment
+
+📦 Installation & Setup
+
+Follow these steps to run the project locally:
+
+git clone https://github.com/Sanjjivani/quickhire.git
 cd quickhire
-Create a virtual environment
-
-bash
-python -m venv venv
-
-# On Windows
-venv\Scripts\activate
-
-# On macOS/Linux
-source venv/bin/activate
-Install dependencies
-
-bash
 pip install -r requirements.txt
-Configure the application
+python app.py
 
-bash
-cp config.example.py config.py
-# Edit config.py with your settings
-Initialize the database
 
-bash
-flask db init
-flask db migrate -m "Initial migration"
-flask db upgrade
-Run the application
+Ensure Python and required dependencies are installed before running the application.
 
-bash
-# Development
-python run.py
+🧪 Usage for Security Learning
 
-# Or with Flask
-flask run --debug
-Access the application
+QuickHire can be used to practise:
 
-Open browser: http://localhost:5000
+Manual form-based vulnerability testing
 
-Default admin: admin@quickhire.com / admin123
+Understanding request–response behaviour
+
+Analysing authentication flow
+
+Identifying insecure input/output handling
+
+Studying client-side JavaScript logic
+
+📌 Disclaimer
+
+This project is created only for learning, experimentation, and skill development.
+All testing should be performed locally on this application only
