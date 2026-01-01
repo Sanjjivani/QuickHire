@@ -8,7 +8,9 @@ The primary purpose of this project is to understand how real-world hiring platf
 
 This application simulates common recruitment workflows while acting as a safe practice environment to analyse input handling, validation gaps, and potential security weaknesses in user-driven systems.
 
-🎯 Project Objectives (Security-Focused)
+
+ 
+ Project Objectives (Security-Focused)
 
 This project was built with the following cybersecurity learning goals:
 
@@ -24,6 +26,8 @@ Practise manual web application security testing
 
 Map findings to the OWASP Top 10
 
+
+
 🚀 Core Features
 👤 User & Recruiter Workflows
 
@@ -34,6 +38,8 @@ Candidate job application submission
 Recruiter-style data viewing (learning-focused)
 
 Role-based flow understanding (basic)
+
+
 
 📄 Form Handling
 
@@ -49,6 +55,8 @@ Sanitisation checks
 
 Payload injection analysis
 
+
+
 🧭 Application Flow
 
 Multi-page navigation
@@ -58,6 +66,8 @@ Clear request–response data flow
 Client-side vs server-side interaction analysis
 
 Ideal for DOM inspection and form testing
+
+
 
 🔐 Security Learning Scope
 
@@ -81,9 +91,13 @@ Broken access control (learning scenarios)
 
 Mapping application behaviour to OWASP Top 10
 
+
+
 ⚠️ Educational Purpose Only
 This application is developed strictly for ethical learning and cybersecurity practice.
 It is not intended for production use.
+
+
 
 🛠 Tech Stack
 
@@ -95,6 +109,8 @@ Database: Local development database
 
 Environment: Local testing environment
 
+
+
 📦 Installation & Setup
 
 Follow these steps to run the project locally:
@@ -104,8 +120,9 @@ cd quickhire
 pip install -r requirements.txt
 python app.py
 
-
 Ensure Python and required dependencies are installed before running the application.
+
+
 
 🧪 Usage for Security Learning
 
@@ -120,6 +137,8 @@ Analysing authentication flow
 Identifying insecure input/output handling
 
 Studying client-side JavaScript logic
+
+
 
 📌 Disclaimer
 
